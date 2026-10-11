@@ -560,3 +560,16 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
   .colE h3 { display: none; } .colE .elems { margin: 2px 0; }
   h2 { padding-right: 10px; }
 }
+/* มือถือแนวนอน: แผงธาตุเป็นคอลัมน์แคบซ้ายสุด (ชื่อ+จำนวน) กระดานกลาง ร้านขวา */
+@media (orientation: landscape) and (max-height: 520px) {
+  .shopgrid { grid-template-columns: 92px 1fr 41%; gap: 4px; }
+  .colE { order: 1; } .colL { order: 2; } .colR { order: 3; }
+  .colE .elems { flex-direction: column; gap: 2px; margin: 0; }
+  .colE .elem { padding: 1px 3px 1px 10px; font-size: 9px; min-height: 0; } .colE .elem b { font-size: 9.5px; display: block; } .colE .elem .cnt { float: none; display: block; font-size: 9px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .colE .elem { height: 17px; line-height: 15px; padding: 0 2px 0 9px; white-space: nowrap; overflow: hidden; border-width: 1px; }
+  .colE .elem b { display: inline; font-size: 9.5px; } .colE .elem .cnt { display: inline; position: static; float: none; margin-left: 3px; font-size: 9px; }
+  .colE .elem::after { width: 6px; }
+  .colE .elems { gap: 1px; }
+}
