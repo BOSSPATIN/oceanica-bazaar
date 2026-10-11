@@ -96,18 +96,20 @@ var Combat = (function () {
   }
 
   function isActive(it) { return it.cd > 0; }
+  // ข้างเคียง = ชิ้นที่ "ติดกัน" บนกระดาน 2 แถว×5: ซ้าย/ขวาในแถวเดียวกัน หรืออยู่คนละแถวแต่คอลัมน์ซ้อนกัน
+  function touching(a, b) {
+    var R = BAL.BOARD_ROW, ra = Math.floor(a.pos / R), rb = Math.floor(b.pos / R);
+    var a0 = a.pos % R, a1 = a0 + a.def.size - 1, b0 = b.pos % R, b1 = b0 + b.def.size - 1;
+    if (ra === rb) return a1 + 1 === b0 || b1 + 1 === a0;
+    return Math.abs(ra - rb) === 1 && a0 <= b1 && b0 <= a1;
+  }
   function targets(side, it, tgt, rnd) {
     var act = side.items.filter(isActive);
     if (tgt === 'self') return [it];
     if (tgt === 'all') return act;
     if (tgt === 'weapon') return act.filter(function (x) { return x.def.tags.indexOf('weapon') >= 0; });
     if (tgt === 'random') { var others = act.filter(function (x) { return x !== it; }); return others.length ? [others[Math.floor(rnd() * others.length)]] : []; }
-    if (tgt === 'adj') {
-      var i = side.items.indexOf(it), out = [];
-      if (i > 0) out.push(side.items[i - 1]);
-      if (i < side.items.length - 1) out.push(side.items[i + 1]);
-      return out.filter(isActive);
-    }
+    if (tgt === 'adj') return side.items.filter(function (x) { return x !== it && touching(it, x) && isActive(x); });
     return [];
   }
 

@@ -151,7 +151,7 @@ var UI = (function () {
     s += flashHtml();
     s += '<div class="shopgrid"><div class="colE"><h3>โบนัสธาตุ <small>ครบ 3 / 5 ชิ้นบนกระดาน</small></h3>' + elemPanel(G.board.map(function (it) { return it.id; })) + '</div><div class="colL">';
     // กระดาน
-    s += '<h2>กระดานเรือ <small>2 แถว แถวละ 5 ช่อง · ของชิ้นเดียวอยู่แถวเดียวกัน · ช่อง 5 ติดกับ 6 · ลากวาง/ลากทับ = สลับที่</small></h2>';
+    s += '<h2>กระดานเรือ <small>2 แถว แถวละ 5 ช่อง · ของชิ้นเดียวอยู่แถวเดียวกัน · ข้างเคียง = ชิ้นที่ติดกันทั้งซ้าย/ขวา/บน/ล่าง · ลากวาง/ลากทับ = สลับที่</small></h2>';
     s += '<div class="board" id="board">';
     var occ = Game.occupied();
     for (var i = 0; i < BAL.BOARD_SLOTS; i++) s += '<div class="slot ' + posCls(i) + '" data-pos="' + i + '">' + (i + 1) + '</div>';
@@ -390,11 +390,16 @@ var UI = (function () {
 
   // ---------- ลาก-วาง ----------
   var drag = null;
+  // ตำแหน่งช่องจากพิกัดเมาส์/นิ้ว — รองรับทั้งกระดานแถวเดียว 10 ช่อง และ 5×2 (ดูจากจำนวนคอลัมน์จริง)
   function boardPos(ev) {
     var bd = document.getElementById('board'); if (!bd) return -1;
-    var r = bd.getBoundingClientRect(), slotW = r.width / BAL.BOARD_SLOTS;
-    var p = Math.floor((ev.clientX - r.left) / slotW);
-    return Math.max(0, Math.min(BAL.BOARD_SLOTS - (drag ? drag.size : 1), p));
+    var r = bd.getBoundingClientRect(), cols = getComputedStyle(bd).gridTemplateColumns.split(' ').length || BAL.BOARD_SLOTS;
+    var rows = Math.ceil(BAL.BOARD_SLOTS / cols), size = drag ? drag.size : 1;
+    var col = Math.floor((ev.clientX - r.left) / (r.width / cols)), row = Math.floor((ev.clientY - r.top) / (r.height / rows));
+    col = Math.max(0, Math.min(cols - 1, col)); row = Math.max(0, Math.min(rows - 1, row));
+    var p = row * cols + col, rowStart = Math.floor(p / BAL.BOARD_ROW) * BAL.BOARD_ROW;
+    p = Math.min(p, rowStart + BAL.BOARD_ROW - size);   // ไม่ให้ชิ้นล้นแถว
+    return Math.max(0, Math.min(BAL.BOARD_SLOTS - size, p));
   }
   function clearHl() { document.querySelectorAll('.slot.over, .stash.over').forEach(function (e) { e.classList.remove('over', 'bad'); }); }
   function onDragStart(ev) {
