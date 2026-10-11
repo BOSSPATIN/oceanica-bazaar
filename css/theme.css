@@ -595,3 +595,12 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
   .blog { height: 150px; font-size: 15px; } .float { font-size: 26px; } .float.fcrit { font-size: 34px; }
   .hasres .blog { display: none; } .banner { font-size: 42px; } .sum .big { font-size: 18px; } .dmgsum .drow { font-size: 14px; }
 }
+@media (min-width: 1300px) and (min-height: 861px) {
+  .bboard { gap: 6px; } .bitem { height: 84px; } .bitem .ic { font-size: 34px; } .bitem .nm { font-size: 13px; padding: 1px 8px; } .bitem:has(.icimg.full) .nm { bottom: 5px; }
+  .side { padding: 5px 10px 5px 16px; margin: 4px 0; } .side .sh { font-size: 15px; margin-bottom: 2px; } .hic.big { width: 34px; height: 34px; font-size: 20px; }
+  .bar.hp.big { height: 24px; } .bar.hp.big em { font-size: 15px; top: 3px; } .status { font-size: 13px; margin: 2px 0; } .side .elt { font-size: 12px; }
+  .vs { font-size: 20px; padding: 2px; } .bhead { margin-bottom: 2px; } .bhead h2 { font-size: 20px; margin: 2px 0; }
+  .blog { height: 96px; font-size: 14px; }
+  .banner { font-size: 30px; margin: 4px 0 2px; } .sum { padding: 6px 10px; } .sum .big { font-size: 16px; } .dmgsum { margin: 4px 0; } .dmgsum .dcol { padding: 4px 8px; } .dmgsum .drow { font-size: 13px; margin: 2px 0; }
+}
+@media (min-width: 1300px) and (min-height: 861px) { .hasres .banner { font-size: 26px; margin: 2px 0 0; } .hasres .sum { padding: 4px 10px; margin: 2px 0; } .hasres .sum .row.c { margin: 2px 0 0; } }
