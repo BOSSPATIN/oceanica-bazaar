@@ -64,6 +64,7 @@ var UI = (function () {
   function flashHtml() { if (!flash) return ''; var s = '<div class="flash ' + flash.cls + '">' + flash.msg + '</div>'; return s; }
 
   function render() {
+    if ($c) $c.classList.remove('hasres');
     var G = Game.get();
     if (!G) return renderTitle();
     if (G.screen === 'shop') return renderShop();
@@ -134,6 +135,7 @@ var UI = (function () {
     s += '<div class="st bad">⛵ เรือเหลือ <b>' + '⛵'.repeat(G.lives) + '</b></div>';
     s += '<button class="tiny" data-act="sfx" title="เปิด/ปิดเสียง">' + (SFX.isOn() ? '🔊' : '🔇') + '</button></div>';
     s += flashHtml();
+    s += '<div class="shopgrid"><div class="colL">';
     // กระดาน
     s += '<h2>กระดานเรือ <small>10 ช่อง · ลากวางได้ (ลากทับชิ้นอื่น = สลับที่) · คลิกชิ้นเพื่อจัดการ · ชิ้นข้างเคียง = ติดกันบนกระดาน</small></h2>';
     s += '<div class="board" id="board">';
@@ -159,6 +161,7 @@ var UI = (function () {
     s += '</div>';
     // ตำรา
     s += '<h3>ตำราติดตัว</h3><div class="skills">' + G.skills.map(function (sk) { var sd = SKILL_BY_ID[sk.id]; return '<span class="skill t' + sk.tier + '" title="' + h(skillDescr(sd, sk.tier)) + '">' + sd.icon + ' ' + sd.name + ' ' + tierTag(sk.tier) + ' <span class="dim">' + skillDescr(sd, sk.tier) + '</span></span>'; }).join('') + '</div>';
+    s += '</div><div class="colR">';
     // ร้าน
     s += '<h2>ตลาดท่าเรือ <span class="goldbadge" title="ทองที่มีตอนนี้">💰 ' + G.gold + ' ทอง</span><small>วันที่ ' + G.day + ' · ซื้อชิ้นเดิมซ้ำ = รวมร่าง · 🔒 ล็อก = เก็บไว้ถึงวันถัดไป</small><button class="tiny" data-act="reroll" style="float:right"' + (G.gold < BAL.REROLL_COST && !G.freeRerolls ? ' disabled' : '') + '>🔄 สุ่มร้านใหม่ (' + (G.freeRerolls ? 'ฟรี ' + G.freeRerolls + ' ครั้ง' : BAL.REROLL_COST + ' ทอง') + ') [R]</button></h2>';
     s += '<div class="offers">';
@@ -168,11 +171,11 @@ var UI = (function () {
         var d = ITEM_BY_ID[o.id];
         s += '<div class="offer t' + o.tier + (o.sold ? ' sold' : '') + (o.locked ? ' locked' : '') + ' el-' + elemOf(d) + '"' + (o.sold ? '' : ' draggable="true" data-offer="' + i + '" data-size="' + d.size + '" title="ลากไปวางบนกระดานเพื่อซื้อลงช่องที่ต้องการ"') + '><div class="oh">' + iconHtml(d, 'thumb') + '<b>' + d.name + '</b> ' + tierTag(o.tier) + (o.sold ? '' : '<button class="tiny lock' + (o.locked ? ' on' : '') + '" data-act="lock" data-i="' + i + '" title="ล็อกไว้ถึงวันถัดไป">' + (o.locked ? '🔒' : '🔓') + '</button>') + '</div>';
         s += '<div class="dim">' + SIZE_NAME[d.size] + ' ' + d.size + ' ช่อง · ' + tagList(d) + '</div><div class="info">' + itemDescr(d, o.tier) + '</div>';
-        s += '<div class="ob">' + (o.sold ? '<span class="dim">ซื้อแล้ว</span>' : '<button class="pri" data-act="buy" data-i="' + i + '"' + (c.ok ? '' : ' disabled') + '>ซื้อ ' + o.cost + ' ทอง' + (c.why === 'merge' ? ' 🔼 รวมร่าง' : c.why === 'stash' ? ' (เข้าช่องเก็บ)' : '') + '</button>' + (c.ok ? '' : '<span class="bad"> ' + c.why + '</span>')) + '</div></div>';
+        s += '<div class="ob">' + (o.sold ? '<span class="dim">ซื้อแล้ว</span>' : '<button class="pri" data-act="buy" data-i="' + i + '"' + (c.ok ? '' : ' disabled') + '>ซื้อ ' + o.cost + '<span class="bx"> ทอง' + (c.why === 'merge' ? ' 🔼 รวมร่าง' : c.why === 'stash' ? ' (เข้าช่องเก็บ)' : '') + '</span>' + (c.why === 'merge' ? '<span class="bxs">🔼</span>' : '') + '</button>' + (c.ok ? '' : '<span class="bad"> ' + c.why + '</span>')) + '</div></div>';
       } else {
         var sd = SKILL_BY_ID[o.id];
         s += '<div class="offer skl t' + o.tier + (o.sold ? ' sold' : '') + (o.locked ? ' locked' : '') + '"><div class="oh"><span class="ic">' + sd.icon + '</span><b>ตำรา: ' + sd.name + '</b> ' + tierTag(o.tier) + (o.sold ? '' : '<button class="tiny lock' + (o.locked ? ' on' : '') + '" data-act="lock" data-i="' + i + '" title="ล็อกไว้ถึงวันถัดไป">' + (o.locked ? '🔒' : '🔓') + '</button>') + '</div><div class="info">' + skillDescr(sd, o.tier) + '</div>';
-        s += '<div class="ob">' + (o.sold ? '<span class="dim">เรียนแล้ว</span>' : '<button class="pri" data-act="buy" data-i="' + i + '"' + (c.ok ? '' : ' disabled') + '>เรียน ' + o.cost + ' ทอง</button>' + (c.ok ? '' : '<span class="bad"> ' + c.why + '</span>')) + '</div></div>';
+        s += '<div class="ob">' + (o.sold ? '<span class="dim">เรียนแล้ว</span>' : '<button class="pri" data-act="buy" data-i="' + i + '"' + (c.ok ? '' : ' disabled') + '>เรียน ' + o.cost + '<span class="bx"> ทอง</span></button>' + (c.ok ? '' : '<span class="bad"> ' + c.why + '</span>')) + '</div></div>';
       }
     });
     s += '</div>';
@@ -186,6 +189,7 @@ var UI = (function () {
     if (G.bonusFight) s += '<div class="row c fightrow"><button class="big pri" data-act="fight">🏴‍☠️ สู้โจรสลัด (Enter)</button><div class="dim">ชนะได้ทอง +' + G.bonusFight.reward + ' · แพ้ไม่เสียเรือ · ไม่นับเป็นวัน</div></div>';
     else s += '<div class="row c fightrow"><button class="big pri glow" data-act="fight">⚔️ ออกรบ วันที่ ' + G.day + ' (Enter)</button><div class="dim">ชนะได้ทอง <b class="gp">+' + Game.winReward(G.streak + 1).total + '</b>' + (G.streak >= 1 ? ' (ชนะติด ' + (G.streak + 1) + ')' : '') + ' · ชนะติดต่อกันได้เพิ่มขั้นละ +' + BAL.STREAK_STEP + ' สูงสุด +' + BAL.STREAK_CAP + ' · แพ้เสียเรือ 1 ลำ รีเซ็ตชนะติด · ทองรายวัน +' + Game.income() + ' ได้ทุกวัน</div></div>';
     s += '<div class="row r savebar"><span class="lnk" data-act="exportsave" title="คัดลอกโค้ดเซฟไปวางในเครื่องอื่น (คอม-มือถือ)">📋 คัดลอกโค้ดเซฟ</span><span class="lnk" data-act="importsave">📥 วางโค้ดเซฟ</span><span class="lnk" data-act="abandon">ล้มเลิกรันนี้</span></div>';
+    s += '</div></div>';
     $c.innerHTML = s;
   }
   function findSel() {
@@ -300,6 +304,7 @@ var UI = (function () {
   function renderResult() {
     var r = B.result, G = Game.get();
     var el = document.getElementById('bres'); if (!el) return;
+    $c.classList.add('hasres');
     var head;
     if (G.bonusFight) head = r === 'win' ? '<span class="good">🏆 ปราบโจรสลัด!</span> ได้ทอง +' + G.bonusFight.reward : r === 'lose' ? '<span class="bad">💀 แพ้โจรสลัด</span> ไม่เสียเรือ' : '<span class="warn">🤝 เสมอ</span>';
     else {
