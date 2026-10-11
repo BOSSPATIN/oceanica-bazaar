@@ -339,13 +339,58 @@ var UI = (function () {
   }
 
   // ---------- จบรัน ----------
+  // ---------- จบรัน ----------
+  var WIN_MSG = [
+    'ทะเลทั้งผืนจารึกชื่อกัปตันไว้แล้ว — ไม่มีเรือลำไหนต้านท่านได้',
+    'สิบสมรภูมิ สิบชัยชนะ ธงกะโหลกของท่านโบกเหนือสมบัติฟากโพ้น',
+    'ลูกเรือร้องเพลงฉลองทั้งคืน กัปตันผู้นี้คือตำนานของตลาดโจรสลัด',
+  ];
+  var LOSE_MSG = [
+    'เรือจมได้ แต่กัปตันไม่เคยจม — ท่าเรือรอให้ท่านกลับมาแก้มืออยู่',
+    'ทุกกัปตันในตำนานล้วนเคยแพ้ สิ่งที่ต่างคือพวกเขาออกเรืออีกครั้ง',
+    'ลมวันนี้ไม่เป็นใจ แต่ของดีๆ ในตลาดยังรอท่านอยู่ที่เดิม',
+  ];
+  var TIMEOUT_MSG = ['ฤดูเดินเรือหมดก่อนถึงสมบัติ — รันหน้าตัดสินใจให้เร็วขึ้นอีกนิด'];
+  function fxLayer(kind) {
+    var out = '', n = kind === 'victory' ? 46 : 60, cols = ['#f6d77a', '#e9b949', '#ff6b6b', '#9fd3ff', '#5ad17a', '#fff'];
+    for (var i = 0; i < n; i++) {
+      var left = Math.round(Math.random() * 100), delay = (Math.random() * 6).toFixed(2), dur = (kind === 'victory' ? 5 + Math.random() * 4 : 0.7 + Math.random() * 0.6).toFixed(2);
+      if (kind === 'victory') out += '<i class="cf" style="left:' + left + '%;background:' + cols[i % cols.length] + ';animation-delay:' + delay + 's;animation-duration:' + dur + 's;transform:rotate(' + Math.round(Math.random() * 360) + 'deg)"></i>';
+      else out += '<i class="rn" style="left:' + left + '%;animation-delay:' + delay + 's;animation-duration:' + dur + 's"></i>';
+    }
+    return '<div class="fxlayer ' + kind + '">' + out + '</div>';
+  }
   function renderEnd() {
-    var G = Game.get(), hero = HERO_BY_ID[G.heroId];
-    var s = '<div class="title"><div class="big sm">' + (G.ended === 'victory' ? '🏆 ชนะครบ ' + BAL.WIN_TARGET + ' ครั้ง — สมบัติฟากโพ้นเป็นของบอส!' : G.ended === 'defeat' ? '💀 เรือจม — รันนี้จบลง' : '⏳ หมดวัน — รันนี้จบลง') + '</div>';
-    s += '<div class="lore">' + hero.icon + ' ' + hero.name + ' ' + hero.cls + ' · ชนะ ' + G.wins + ' · แพ้ ' + G.history.filter(function (x) { return x.result === 'lose'; }).length + ' · เสมอ ' + G.history.filter(function (x) { return x.result === 'draw'; }).length + ' · ถึงวันที่ ' + G.day + ' · Lv' + Game.level() + '</div>';
-    s += '<div class="slot"><b>กระดานสุดท้าย:</b> ' + G.board.map(function (it) { return ITEM_BY_ID[it.id].icon + ' ' + ITEM_BY_ID[it.id].name + ' (' + TIERS[it.tier] + ')'; }).join(' · ') + '<br><b>ตำรา:</b> ' + G.skills.map(function (k) { return SKILL_BY_ID[k.id].icon + ' ' + SKILL_BY_ID[k.id].name + ' (' + TIERS[k.tier] + ')'; }).join(' · ') + '</div>';
-    s += '<div class="slot"><b>ประวัติ:</b> ' + G.history.map(function (x) { return 'วัน' + x.day + (x.result === 'win' ? '🏆' : x.result === 'lose' ? '💀' : '🤝'); }).join(' ') + '</div>';
-    s += '<div class="row c"><button class="big pri" data-act="newrun">เริ่มรันใหม่ (Enter)</button></div></div>';
+    var G = Game.get(), hero = HERO_BY_ID[G.heroId], kind = G.ended;
+    var loses = G.history.filter(function (x) { return x.result === 'lose' && !x.bonus; }).length, draws = G.history.filter(function (x) { return x.result === 'draw' && !x.bonus; }).length;
+    var pirates = G.history.filter(function (x) { return x.bonus && x.result === 'win'; }).length;
+    var msgs = kind === 'victory' ? WIN_MSG : kind === 'defeat' ? LOSE_MSG : TIMEOUT_MSG;
+    var msg = msgs[(G.seed + G.day) % msgs.length];
+    var title = kind === 'victory' ? '🏆 ชัยชนะ!' : kind === 'defeat' ? '⚓ เรือจม...' : '⏳ หมดฤดูเดินเรือ';
+    var sub = kind === 'victory' ? 'ชนะครบ ' + BAL.WIN_TARGET + ' ครั้ง — สมบัติฟากโพ้นเป็นของบอส' : kind === 'defeat' ? 'เสียเรือครบ ' + BAL.LIVES + ' ลำ ที่วันที่ ' + G.day + ' · ชนะไป ' + G.wins + '/' + BAL.WIN_TARGET : 'ถึงวันที่ ' + BAL.MAX_DAY + ' · ชนะไป ' + G.wins + '/' + BAL.WIN_TARGET;
+    var s = '<div class="endwrap ' + kind + '">' + fxLayer(kind === 'victory' ? 'victory' : 'defeat');
+    s += '<div class="endhead"><div class="endtitle">' + title + '</div><div class="endsub">' + sub + '</div><div class="endmsg">“' + msg + '”</div></div>';
+    s += '<div class="endgrid"><div class="endleft">';
+    s += '<div class="endhero"><div class="portrait" style="background:' + hero.color + '"><span>' + hero.icon + '</span><small>' + hero.cls + '</small></div><div class="hn">' + hero.name + '</div><div class="dim">Lv' + Game.level() + ' · HP ' + Game.maxHp() + '</div></div>';
+    s += '<div class="statgrid">' +
+      '<div class="stat good"><b>' + G.wins + '</b><span>ชนะ</span></div>' +
+      '<div class="stat bad"><b>' + loses + '</b><span>แพ้</span></div>' +
+      '<div class="stat"><b>' + draws + '</b><span>เสมอ</span></div>' +
+      '<div class="stat warn"><b>' + (G.bestStreak || 0) + '</b><span>ชนะติดสูงสุด</span></div>' +
+      '<div class="stat"><b>' + G.day + '</b><span>วันที่ไปถึง</span></div>' +
+      '<div class="stat gp"><b>' + G.gold + '</b><span>ทองคงเหลือ</span></div>' +
+      (pirates ? '<div class="stat"><b>' + pirates + '</b><span>ปราบโจรสลัด</span></div>' : '') +
+      '</div>';
+    s += '<h3>ตำราติดตัว</h3><div class="skills">' + G.skills.map(function (sk) { var sd = SKILL_BY_ID[sk.id]; return '<span class="skill t' + sk.tier + '">' + sd.icon + ' ' + sd.name + ' ' + tierTag(sk.tier) + '</span>'; }).join('') + '</div>';
+    s += '<h3>เส้นทาง</h3><div class="hist">' + G.history.map(function (x) { return '<span class="hd ' + x.result + (x.bonus ? ' bonus' : '') + '" title="' + (x.bonus ? 'รบพิเศษโจรสลัด' : 'วันที่ ' + x.day) + '">' + (x.bonus ? '🏴‍☠️' : x.day) + '<i>' + (x.result === 'win' ? '🏆' : x.result === 'lose' ? '💀' : '🤝') + '</i></span>'; }).join('') + '</div>';
+    s += '</div><div class="endright"><h3>กระดานสุดท้าย <small>' + G.board.length + ' ชิ้น</small></h3><div class="board endboard">';
+    for (var i = 0; i < BAL.BOARD_SLOTS; i++) s += '<div class="slot ' + posCls(i) + '">' + (i + 1) + '</div>';
+    G.board.forEach(function (it) { s += itemBox(it, '', posCls(it.pos)); });
+    s += '</div>';
+    if (G.stash.length) s += '<div class="dim" style="margin-top:4px">ช่องเก็บ: ' + G.stash.map(function (it) { return ITEM_BY_ID[it.id].icon + ' ' + ITEM_BY_ID[it.id].name; }).join(' · ') + '</div>';
+    s += '</div></div>';
+    s += '<div class="row c endbtn"><button class="big pri glow" data-act="newrun">' + (kind === 'victory' ? '⛵ ออกเรือรอบใหม่ (Enter)' : '⚔️ แก้มือ — เริ่มรันใหม่ (Enter)') + '</button></div>';
+    s += '</div>';
     $c.innerHTML = s;
   }
 
