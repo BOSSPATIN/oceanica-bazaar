@@ -405,7 +405,7 @@ var UI = (function () {
   function onDragStart(ev) {
     var t = ev.target.closest('[data-uid],[data-offer]'); if (!t || !t.hasAttribute('draggable')) return;
     drag = { uid: t.hasAttribute('data-uid') ? +t.getAttribute('data-uid') : null, offer: t.hasAttribute('data-offer') ? +t.getAttribute('data-offer') : null, size: +t.getAttribute('data-size') || 1 };
-    try { ev.dataTransfer.setData('text/plain', String(drag.uid !== null ? drag.uid : 'offer' + drag.offer)); ev.dataTransfer.effectAllowed = 'move'; } catch (e) { }
+    try { ev.dataTransfer.setData('text/plain', String(drag.uid !== null ? drag.uid : 'offer' + drag.offer)); ev.dataTransfer.effectAllowed = 'copyMove'; } catch (e) { }
     t.classList.add('dragging');
   }
   function onDragOver(ev) {
@@ -413,6 +413,7 @@ var UI = (function () {
     var bd = ev.target.closest('#board'), st = ev.target.closest('#stash');
     if (!bd && !st) { clearHl(); return; }
     ev.preventDefault();
+    try { ev.dataTransfer.dropEffect = drag.offer !== null ? 'copy' : 'move'; } catch (e) { }
     clearHl();
     if (st) { if (drag.uid !== null) st.classList.add('over'); return; }
     var p = boardPos(ev), slots = bd.querySelectorAll('.slot');
@@ -467,7 +468,7 @@ var UI = (function () {
     document.addEventListener('pointerdown', onPtrDown, { passive: true });
     document.addEventListener('pointermove', onPtrMove, { passive: false });
     document.addEventListener('pointerup', onPtrUp);
-    document.addEventListener('pointercancel', function () { tdrag = null; drag = null; clearHl(); });
+    document.addEventListener('pointercancel', function (ev) { if (ev.pointerType === 'touch') { tdrag = null; drag = null; clearHl(); } });  // ⚠ เมาส์: Chrome ยิง pointercancel ตอนเริ่ม native drag ห้ามล้าง drag
     $c = document.getElementById('center');
     Game.load();
     document.addEventListener('click', onClick);
