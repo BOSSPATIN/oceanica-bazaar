@@ -480,3 +480,24 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
 @media (min-width: 1300px) and (min-height: 861px) and (max-height: 1100px) {
   .heroart { height: 230px; max-height: none; } .title { padding: 6px 24px 10px; } .title .big { font-size: 52px; margin-top: 2px; } .title .lore { margin: 8px auto; } .stats { margin: 6px auto; } .title .lore.dim { margin: 4px auto; font-size: 12px; }
 }
+
+/* ===== รอบ 17: แผงธาตุบอกครบ 2 ขั้น + การ์ดกระดานใหญ่ขึ้นบนจอคอมกว้าง ===== */
+.elem .tl { color: var(--paper3); font-size: 12.5px; line-height: 1.25; margin-top: 2px; }
+.elem .tl.done { color: var(--gold2); font-weight: bold; }
+.elem.on2 .tl.done { color: var(--bluelt); }
+.elem { min-height: 0; }
+@media (orientation: landscape) and (max-height: 520px) { .elem .tl { display: none; } }
+@media (max-width: 1060px) { .elem .tl { font-size: 10.5px; } }
+@media (min-width: 1300px) and (min-height: 861px) {
+  .board .slot, .item { height: 150px; }
+  .item .ic { font-size: 56px; }
+  .item .nm, .item.s1 .nm { font-size: 14px; padding: 2px 8px; }
+  .item:has(.icimg.full) .nm, .item:has(.icimg.full).s1 .nm { bottom: 4px; left: 4px; right: 4px; }
+  .item .cd { font-size: 13px; padding: 1px 7px; } .item .elb { font-size: 12px; padding: 1px 7px; left: 4px; top: 4px; }
+  .icimg.full { -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,.35) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,.35) 100%); }
+  .stash .item { width: 120px; height: 100px; }
+  .elems { gap: 8px; } .elem { padding: 6px 10px 6px 30px; } .elem b { font-size: 17px; } .elem .cnt { font-size: 17px; } .elem .tl { font-size: 13.5px; margin-top: 3px; }
+}
+@media (min-width: 1300px) and (min-height: 521px) and (max-height: 860px) {
+  .elem .tl { font-size: 11px; margin-top: 1px; }
+}

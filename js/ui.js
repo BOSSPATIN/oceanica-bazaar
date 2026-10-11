@@ -93,8 +93,8 @@ var UI = (function () {
     var s = '<div class="elems">';
     ELEMENTS.forEach(function (e) {
       var b = bon[e.id], n = c[e.id];
-      s += '<div class="elem el-' + e.id + (b ? (b.tier === 1 ? ' on2' : ' on') : '') + '" title="ครบ 3 ชิ้น: ' + h(e.tiers[0].text) + ' / ครบ 5 ชิ้น: ' + h(e.tiers[1].text) + '"><b>' + e.icon + ' ' + e.name + '</b><span class="cnt">' + n + '/' + (n >= 5 ? 5 : n >= 3 ? 5 : 3) + '</span>';
-      s += '<div>' + (b ? b.text : n >= 1 ? 'อีก ' + (3 - n) + ' ชิ้น: ' + e.tiers[0].text : e.tiers[0].text) + '</div></div>';
+      s += '<div class="elem el-' + e.id + (b ? (b.tier === 1 ? ' on2' : ' on') : '') + '" title="ครบ 3 ชิ้น: ' + h(e.tiers[0].text) + ' / ครบ 5 ชิ้น: ' + h(e.tiers[1].text) + '"><b>' + e.icon + ' ' + e.name + '</b><span class="cnt">' + n + ' ชิ้น</span>';
+      s += '<div class="tl' + (n >= 3 ? ' done' : '') + '">' + (n >= 3 ? '✅' : '▫️') + ' 3 ชิ้น: ' + e.tiers[0].text + '</div><div class="tl' + (n >= 5 ? ' done' : '') + '">' + (n >= 5 ? '✅' : '▫️') + ' 5 ชิ้น: ' + e.tiers[1].text + '</div></div>';
     });
     return s + '</div>';
   }
