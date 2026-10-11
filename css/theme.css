@@ -420,3 +420,55 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
 .toast.good { background: #d8f0d0; color: #124a1a; } .toast.bad { background: #f5c9c9; color: #6a0d0d; }
 @media (max-width: 1060px) { .item .elb, .bitem .elb { font-size: 8.5px; padding: 0 4px; left: 2px; top: 2px; } .toast { font-size: 13px; bottom: 10px; } }
 @media (orientation: landscape) and (max-height: 520px) { .item .elb, .bitem .elb { font-size: 7.5px; padding: 0 3px; left: 2px; top: 2px; } .offer .oh .elb { font-size: 8px; padding: 0 4px; } .toast { font-size: 11px; padding: 3px 10px; bottom: 6px; } .stash .item .elb { display: none; } }
+
+/* ===== รอบ 16: คอมจอกว้าง (≥1300px) — ใช้เต็มจอ 2 คอลัมน์ จบในจอเดียว ===== */
+@media (min-width: 1300px) and (min-height: 521px) {
+  #app { width: min(96vw, 1880px); }
+  #center { min-height: 0; }
+  .shopgrid { grid-template-columns: 56fr 44fr; gap: 16px; align-items: start; }
+  .colR { position: sticky; top: 6px; }
+  .offers { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .offer { min-height: 0; }
+  .fightrow { margin-top: 8px; }
+  .fightrow .dim { font-size: 13px; }
+  .ghostbox { font-size: 13px; }
+  .blog { height: 200px; }
+  .bboard { gap: 6px; }
+  .title { max-width: 1100px; margin: 0 auto; }
+}
+/* จอกว้างแต่เตี้ย (เช่น 1366×768): ย่อลงอีกขั้น */
+@media (min-width: 1300px) and (min-height: 521px) and (max-height: 860px) {
+  #logo { height: 44px; line-height: 44px; font-size: 22px; }
+  #foot { display: none; }
+  .topbar { padding: 3px 8px; font-size: 14px; } .topbar .st b { font-size: 15px; }
+  h2 { font-size: 18px; padding: 2px 10px 2px 14px; margin: 5px 0 4px; } h2 small { font-size: 12px; } h3 { font-size: 14px; margin: 6px 0 2px; }
+  .board .slot, .item { height: 78px; } .item .nm, .bitem .nm { font-size: 12px; }
+  .elem { min-height: 0; padding: 3px 8px 3px 24px; font-size: 12px; } .elem b { font-size: 14px; } .elem .cnt { font-size: 14px; }
+  .stash { min-height: 32px; } .stash .item { width: 80px; height: 64px; }
+  .offer .oh { font-size: 15px; padding: 4px 8px 3px; } .offer > .info { font-size: 12.5px; } .offer > .dim { font-size: 12px; } .offer .ob { padding: 3px 8px 5px; }
+  .icimg.thumb { width: 40px; height: 40px; }
+  .ghostbox { font-size: 12px; padding: 4px 8px; } .ghostbox > div { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .fightrow { padding: 6px; } .fightrow button.big { font-size: 17px; padding: 6px 18px; }
+  .bitem { height: 70px; } .blog { height: 150px; }
+  .heroart { max-height: 220px; object-fit: cover; }
+}
+/* จอกว้าง: ตอนผลรบ ซ่อน log ให้ผล+ปุ่มอยู่ในจอ */
+@media (min-width: 1300px) and (min-height: 521px) {
+  .hasres .blog { display: none; }
+  .hasres .banner { margin: 4px 0 2px; font-size: 34px; }
+}
+@media (min-width: 1300px) and (min-height: 521px) and (max-height: 860px) {
+  .hasres .dmgsum { display: none; } .hasres .banner { font-size: 24px; margin: 2px 0; } .hasres .sum { padding: 4px 8px; } .hasres .sum .big { font-size: 14px; }
+  .blog { height: 120px; }
+  .offer { height: 118px; overflow: hidden; } .offer > .dim { display: none; } .offer > .info { line-height: 1.2; max-height: 32px; overflow: hidden; }
+  .icimg.thumb { width: 32px; height: 32px; } .offer .oh { font-size: 14px; padding: 3px 8px 2px; }
+  .ghostbox > div { -webkit-line-clamp: 2; }
+  .board .slot, .item { height: 70px; } .item .ic { font-size: 24px; } .item .nm, .bitem .nm { font-size: 11px; }
+  .stash { min-height: 28px; padding: 2px; } .stash .item { width: 70px; height: 54px; } .stash .item .cd { display: none; }
+  .elem { padding: 2px 6px 2px 20px; font-size: 11px; } .elem b, .elem .cnt { font-size: 13px; } .elem > div { line-height: 1.15; }
+  .skills { font-size: 12px; } .skill { padding: 1px 6px; }
+  .bitem { height: 62px; } .status { font-size: 12px; } .bar.hp.big { height: 20px; }
+  .fightrow { padding: 4px; margin-top: 4px; } .fightrow button.big { font-size: 16px; padding: 4px 16px; } .fightrow .dim { font-size: 12px; }
+  .savebar { margin: 2px 0 0; font-size: 12px; }
+  .topbar { margin-bottom: 4px; }
+}
