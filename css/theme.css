@@ -574,3 +574,6 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
   .colE .elems { gap: 1px; }
 }
 @media (orientation: landscape) and (max-height: 520px) { .colE .elem { flex: none; } }
+/* ภาพในการ์ดไม่รับเมาส์เอง (ให้การ์ดเป็นตัวลาก) — draggable=false บน img ทำให้ลากการ์ดแม่ไม่ได้ใน Chrome */
+.icimg { pointer-events: none; -webkit-user-drag: none; user-select: none; }
+.item .nm, .item .cd, .item .elb, .bitem .nm { pointer-events: none; }

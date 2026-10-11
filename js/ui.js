@@ -35,7 +35,7 @@ var UI = (function () {
   var TAG_EL = { fire: 1, water: 1, earth: 1, metal: 1, wood: 1 };
   // ไอคอน: ถ้ามีภาพวาด (d.img) ใช้ภาพ ไม่งั้นใช้อีโมจิ
   // full = ภาพเต็มการ์ด (กระดาน/หน้ารบ), thumb = ย่อเล็ก (ร้าน/เหตุการณ์)
-  function iconHtml(d, mode) { return d.img ? '<img class="icimg ' + (mode === 'thumb' ? 'thumb' : 'full') + '" src="' + d.img + '" alt="" draggable="false">' : '<span class="ic">' + d.icon + '</span>'; }
+  function iconHtml(d, mode) { return d.img ? '<img class="icimg ' + (mode === 'thumb' ? 'thumb' : 'full') + '" src="' + d.img + '" alt="">' : '<span class="ic">' + d.icon + '</span>'; }
   var EL_ICON = { fire: '🔥 ไฟ', water: '💧 น้ำ', earth: '⛰️ ดิน', metal: '⚙️ โลหะ', wood: '🌿 ไม้' };
   function elBadge(d) { if (!d || !d.tags) return ''; var e = elemOf(d); return EL_ICON[e] ? '<span class="elb eb-' + e + '">' + EL_ICON[e] + '</span>' : ''; }
   function elemOf(d) { for (var i = 0; i < d.tags.length; i++) if (TAG_EL[d.tags[i]]) return d.tags[i]; return 'none'; }
