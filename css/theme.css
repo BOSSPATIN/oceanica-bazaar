@@ -408,3 +408,15 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
 @media (orientation: landscape) and (max-height: 520px) {
   h2 { padding-right: 100px; } h2 button { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* ===== รอบ 15: ป้ายธาตุบนการ์ด + toast ลอยล่างจอ ===== */
+.elb { display: inline-block; padding: 0 6px; border-radius: 10px; font-size: 11px; font-weight: bold; color: #fff; border: 1px solid var(--ink); text-shadow: 1px 1px 0 var(--ink); white-space: nowrap; vertical-align: middle; line-height: 1.5; }
+.eb-fire { background: linear-gradient(180deg, #e63946, #9b1b30); } .eb-water { background: linear-gradient(180deg, #3a86c8, #1d4e89); } .eb-earth { background: linear-gradient(180deg, #a3742e, #6b4a2b); } .eb-metal { background: linear-gradient(180deg, #8e98a8, #4a5262); color: #fff; } .eb-wood { background: linear-gradient(180deg, #2a9a6a, #0b3d2e); }
+.item .elb, .bitem .elb { position: absolute; left: 3px; top: 3px; z-index: 2; font-size: 10px; padding: 0 5px; }
+.offer .oh .elb { margin-right: 2px; } .offer .oh .elb, .evt .offer .oh .elb { font-size: 11px; }
+.flash { display: none; }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(20px); z-index: 60; max-width: 90vw; padding: 7px 16px; font-size: 15px; font-weight: bold; color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 8px 3px 8px 3px / 3px 8px 3px 8px; box-shadow: 3px 3px 0 var(--ink), 0 6px 18px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.good { background: #d8f0d0; color: #124a1a; } .toast.bad { background: #f5c9c9; color: #6a0d0d; }
+@media (max-width: 1060px) { .item .elb, .bitem .elb { font-size: 8.5px; padding: 0 4px; left: 2px; top: 2px; } .toast { font-size: 13px; bottom: 10px; } }
+@media (orientation: landscape) and (max-height: 520px) { .item .elb, .bitem .elb { font-size: 7.5px; padding: 0 3px; left: 2px; top: 2px; } .offer .oh .elb { font-size: 8px; padding: 0 4px; } .toast { font-size: 11px; padding: 3px 10px; bottom: 6px; } .stash .item .elb { display: none; } }

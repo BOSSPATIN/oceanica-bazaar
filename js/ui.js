@@ -36,6 +36,8 @@ var UI = (function () {
   // ไอคอน: ถ้ามีภาพวาด (d.img) ใช้ภาพ ไม่งั้นใช้อีโมจิ
   // full = ภาพเต็มการ์ด (กระดาน/หน้ารบ), thumb = ย่อเล็ก (ร้าน/เหตุการณ์)
   function iconHtml(d, mode) { return d.img ? '<img class="icimg ' + (mode === 'thumb' ? 'thumb' : 'full') + '" src="' + d.img + '" alt="" draggable="false">' : '<span class="ic">' + d.icon + '</span>'; }
+  var EL_ICON = { fire: '🔥 ไฟ', water: '💧 น้ำ', earth: '⛰️ ดิน', metal: '⚙️ โลหะ', wood: '🌿 ไม้' };
+  function elBadge(d) { if (!d || !d.tags) return ''; var e = elemOf(d); return EL_ICON[e] ? '<span class="elb eb-' + e + '">' + EL_ICON[e] + '</span>' : ''; }
   function elemOf(d) { for (var i = 0; i < d.tags.length; i++) if (TAG_EL[d.tags[i]]) return d.tags[i]; return 'none'; }
   // ภาพประกอบหน้าแรก: เรือโจรสลัดเงาดำ พระอาทิตย์แดง คลื่นลายเซกะอิฮะ (วาดด้วย SVG ไม่มีไฟล์ภาพ)
   var HERO_SVG = '<svg class="heroart" viewBox="0 0 1000 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
@@ -61,7 +63,18 @@ var UI = (function () {
   function tierTag(t) { return '<span class="tier t' + t + '">' + TIERS[t] + '</span>'; }
   function tagList(def) { return def.tags.map(function (t) { return '<span class="tag tg-' + t + '">' + TAG_NAME[t] + '</span>'; }).join(' '); }
   function setFlash(msg, cls) { flash = msg ? { msg: msg, cls: cls || '' } : null; }
-  function flashHtml() { if (!flash) return ''; var s = '<div class="flash ' + flash.cls + '">' + flash.msg + '</div>'; return s; }
+  var toastT = null;
+  function flashHtml() {
+    if (!flash) return '';
+    var f = flash; flash = null;
+    setTimeout(function () {
+      var t = document.getElementById('toast');
+      if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+      t.className = 'toast ' + f.cls + ' show'; t.innerHTML = f.msg;
+      clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 3200);
+    }, 0);
+    return '';
+  }
 
   function render() {
     if ($c) $c.classList.remove('hasres');
@@ -110,7 +123,7 @@ var UI = (function () {
     var G = Game.get(), e = G.event, ev = EVENTS.filter(function (x) { return x.id === e.id; })[0];
     var s = '<div class="title"><div class="big sm">📅 วันที่ ' + G.day + ' — เหตุการณ์ระหว่างทาง</div>';
     s += '<div class="evt"><div class="eh"><span>' + ev.icon + '</span>' + ev.name + '</div><div class="evr">' + ev.text + '</div>';
-    if (e.item) { var d = ITEM_BY_ID[e.item.id]; s += '<div class="offer t' + e.item.tier + '" style="margin:8px 0;text-align:left"><div class="oh">' + iconHtml(d, 'thumb') + '<b>' + d.name + '</b> ' + tierTag(e.item.tier) + '</div><div class="dim">' + SIZE_NAME[d.size] + ' ' + d.size + ' ช่อง · ' + tagList(d) + '</div><div class="info">' + itemDescr(d, e.item.tier) + '</div></div>'; }
+    if (e.item) { var d = ITEM_BY_ID[e.item.id]; s += '<div class="offer t' + e.item.tier + '" style="margin:8px 0;text-align:left"><div class="oh">' + iconHtml(d, 'thumb') + '<b>' + d.name + '</b> ' + elBadge(d) + tierTag(e.item.tier) + '</div><div class="dim">' + SIZE_NAME[d.size] + ' ' + d.size + ' ช่อง · ' + tagList(d) + '</div><div class="info">' + itemDescr(d, e.item.tier) + '</div></div>'; }
     ev.choices.forEach(function (ch, i) {
       var label = ch.t;
       if (ch.k === 'buySpecial') label = 'ซื้อ ' + ITEM_BY_ID[e.item.id].name + ' (' + TIERS[e.item.tier] + ') ราคา ' + e.item.cost + ' ทอง' + (G.gold < e.item.cost ? ' — ทองไม่พอ' : '');
@@ -124,7 +137,7 @@ var UI = (function () {
   function itemBox(it, extra) {
     var d = ITEM_BY_ID[it.id];
     return '<div class="item t' + it.tier + (sel === it.uid ? ' sel' : '') + ' s' + d.size + ' el-' + elemOf(d) + '" draggable="true" data-uid="' + it.uid + '" data-size="' + d.size + '" style="' + (extra || '') + '" title="' + h(itemDescr(d, it.tier)) + '">' +
-      '' + iconHtml(d) + '<span class="nm">' + d.name + '</span><span class="cd">' + (d.cd ? (d.cd / 1000) + 'วิ' : 'ติดตัว') + '</span></div>';
+      '' + iconHtml(d) + elBadge(d) + '<span class="nm">' + d.name + '</span><span class="cd">' + (d.cd ? (d.cd / 1000) + 'วิ' : 'ติดตัว') + '</span></div>';
   }
   function renderShop() {
     var G = Game.get(), hero = HERO_BY_ID[G.heroId];
@@ -169,12 +182,12 @@ var UI = (function () {
       var c = Game.canBuy(i), own;
       if (o.type === 'item') {
         var d = ITEM_BY_ID[o.id];
-        s += '<div class="offer t' + o.tier + (o.sold ? ' sold' : '') + (o.locked ? ' locked' : '') + ' el-' + elemOf(d) + '"' + (o.sold ? '' : ' draggable="true" data-offer="' + i + '" data-size="' + d.size + '" title="ลากไปวางบนกระดานเพื่อซื้อลงช่องที่ต้องการ"') + '><div class="oh">' + iconHtml(d, 'thumb') + '<b>' + d.name + '</b> ' + tierTag(o.tier) + (o.sold ? '' : '<button class="tiny lock' + (o.locked ? ' on' : '') + '" data-act="lock" data-i="' + i + '" title="ล็อกไว้ถึงวันถัดไป">' + (o.locked ? '🔒' : '🔓') + '</button>') + '</div>';
+        s += '<div class="offer t' + o.tier + (o.sold ? ' sold' : '') + (o.locked ? ' locked' : '') + ' el-' + elemOf(d) + '"' + (o.sold ? '' : ' draggable="true" data-offer="' + i + '" data-size="' + d.size + '" title="ลากไปวางบนกระดานเพื่อซื้อลงช่องที่ต้องการ"') + '><div class="oh">' + iconHtml(d, 'thumb') + '<b>' + d.name + '</b> ' + elBadge(d) + tierTag(o.tier) + (o.sold ? '' : '<button class="tiny lock' + (o.locked ? ' on' : '') + '" data-act="lock" data-i="' + i + '" title="ล็อกไว้ถึงวันถัดไป">' + (o.locked ? '🔒' : '🔓') + '</button>') + '</div>';
         s += '<div class="dim">' + SIZE_NAME[d.size] + ' ' + d.size + ' ช่อง · ' + tagList(d) + '</div><div class="info">' + itemDescr(d, o.tier) + '</div>';
         s += '<div class="ob">' + (o.sold ? '<span class="dim">ซื้อแล้ว</span>' : '<button class="pri" data-act="buy" data-i="' + i + '"' + (c.ok ? '' : ' disabled') + '>ซื้อ ' + o.cost + '<span class="bx"> ทอง' + (c.why === 'merge' ? ' 🔼 รวมร่าง' : c.why === 'stash' ? ' (เข้าช่องเก็บ)' : '') + '</span>' + (c.why === 'merge' ? '<span class="bxs">🔼</span>' : '') + '</button>' + (c.ok ? '' : '<span class="bad"> ' + c.why + '</span>')) + '</div></div>';
       } else {
         var sd = SKILL_BY_ID[o.id];
-        s += '<div class="offer skl t' + o.tier + (o.sold ? ' sold' : '') + (o.locked ? ' locked' : '') + '"><div class="oh"><span class="ic">' + sd.icon + '</span><b>ตำรา: ' + sd.name + '</b> ' + tierTag(o.tier) + (o.sold ? '' : '<button class="tiny lock' + (o.locked ? ' on' : '') + '" data-act="lock" data-i="' + i + '" title="ล็อกไว้ถึงวันถัดไป">' + (o.locked ? '🔒' : '🔓') + '</button>') + '</div><div class="info">' + skillDescr(sd, o.tier) + '</div>';
+        s += '<div class="offer skl t' + o.tier + (o.sold ? ' sold' : '') + (o.locked ? ' locked' : '') + '"><div class="oh"><span class="ic">' + sd.icon + '</span><b>ตำรา: ' + sd.name + '</b> ' + elBadge(d) + tierTag(o.tier) + (o.sold ? '' : '<button class="tiny lock' + (o.locked ? ' on' : '') + '" data-act="lock" data-i="' + i + '" title="ล็อกไว้ถึงวันถัดไป">' + (o.locked ? '🔒' : '🔓') + '</button>') + '</div><div class="info">' + skillDescr(sd, o.tier) + '</div>';
         s += '<div class="ob">' + (o.sold ? '<span class="dim">เรียนแล้ว</span>' : '<button class="pri" data-act="buy" data-i="' + i + '"' + (c.ok ? '' : ' disabled') + '>เรียน ' + o.cost + '<span class="bx"> ทอง</span></button>' + (c.ok ? '' : '<span class="bad"> ' + c.why + '</span>')) + '</div></div>';
       }
     });
@@ -222,7 +235,7 @@ var UI = (function () {
     s += '<div class="bboard">';
     sd.items.forEach(function (it, i) {
       var d = it.def;
-      s += '<div class="bitem t' + it.tier + ' s' + d.size + ' el-' + elemOf(d) + '" id="bi-' + who + '-' + i + '" title="' + h(itemDescr(d, it.tier)) + '">' + iconHtml(d) + '<span class="nm">' + d.name + '</span><span class="use" id="bu-' + who + '-' + i + '"></span><div class="cdbar"><i id="bc-' + who + '-' + i + '"></i></div></div>';
+      s += '<div class="bitem t' + it.tier + ' s' + d.size + ' el-' + elemOf(d) + '" id="bi-' + who + '-' + i + '" title="' + h(itemDescr(d, it.tier)) + '">' + iconHtml(d) + elBadge(d) + '<span class="nm">' + d.name + '</span><span class="use" id="bu-' + who + '-' + i + '"></span><div class="cdbar"><i id="bc-' + who + '-' + i + '"></i></div></div>';
     });
     s += '</div></div>';
     return s;
