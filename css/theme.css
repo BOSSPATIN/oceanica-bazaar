@@ -472,3 +472,8 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
   .savebar { margin: 2px 0 0; font-size: 12px; }
   .topbar { margin-bottom: 4px; }
 }
+@media (min-width: 1300px) and (min-height: 521px) and (max-height: 860px) {
+  .heroart { display: none; } .title { padding: 4px 24px 8px; } .title .big { font-size: 40px; letter-spacing: 10px; } .title .lore { margin: 6px auto; font-size: 13px; }
+  .hero { padding: 6px; } .hero .portrait { width: 70px; height: 84px; } .hero .portrait span { font-size: 36px; } .hero .hn { font-size: 18px; } .stats { margin: 6px auto; } .title .lore.dim { font-size: 11px; margin: 4px auto; }
+}
+@media (min-width: 1300px) and (min-height: 861px) and (max-height: 1000px) { .heroart { max-height: 240px; object-fit: cover; } }
