@@ -573,3 +573,4 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
   .colE .elem::after { width: 6px; }
   .colE .elems { gap: 1px; }
 }
+@media (orientation: landscape) and (max-height: 520px) { .colE .elem { flex: none; } }
