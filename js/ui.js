@@ -40,7 +40,7 @@ var UI = (function () {
   function elBadge(d) { if (!d || !d.tags) return ''; var e = elemOf(d); return EL_ICON[e] ? '<span class="elb eb-' + e + '">' + EL_ICON[e] + '</span>' : ''; }
   function elemOf(d) { for (var i = 0; i < d.tags.length; i++) if (TAG_EL[d.tags[i]]) return d.tags[i]; return 'none'; }
   // ภาพประกอบหน้าแรก: เรือโจรสลัดเงาดำ พระอาทิตย์แดง คลื่นลายเซกะอิฮะ (วาดด้วย SVG ไม่มีไฟล์ภาพ)
-  var HERO_SVG = '<svg class="heroart" viewBox="0 0 1000 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+  var HERO_SVG = '<svg class="heroart" viewBox="0 0 1000 330" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
     '<defs><pattern id="sgh" width="60" height="30" patternUnits="userSpaceOnUse">' +
     '<g fill="none" stroke="#9fd3ff" stroke-width="2.2"><circle cx="30" cy="30" r="28"/><circle cx="30" cy="30" r="21"/><circle cx="30" cy="30" r="14"/><circle cx="30" cy="30" r="7"/>' +
     '<circle cx="0" cy="15" r="28"/><circle cx="0" cy="15" r="21"/><circle cx="0" cy="15" r="14"/><circle cx="0" cy="15" r="7"/><circle cx="60" cy="15" r="28"/><circle cx="60" cy="15" r="21"/><circle cx="60" cy="15" r="14"/><circle cx="60" cy="15" r="7"/></g></pattern>' +

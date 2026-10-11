@@ -477,3 +477,6 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
   .hero { padding: 6px; } .hero .portrait { width: 70px; height: 84px; } .hero .portrait span { font-size: 36px; } .hero .hn { font-size: 18px; } .stats { margin: 6px auto; } .title .lore.dim { font-size: 11px; margin: 4px auto; }
 }
 @media (min-width: 1300px) and (min-height: 861px) and (max-height: 1000px) { .heroart { max-height: 240px; object-fit: cover; } }
+@media (min-width: 1300px) and (min-height: 861px) and (max-height: 1100px) {
+  .heroart { height: 230px; max-height: none; } .title { padding: 6px 24px 10px; } .title .big { font-size: 52px; margin-top: 2px; } .title .lore { margin: 8px auto; } .stats { margin: 6px auto; } .title .lore.dim { margin: 4px auto; font-size: 12px; }
+}
