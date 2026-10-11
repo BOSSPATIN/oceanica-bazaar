@@ -30,6 +30,9 @@ var SFX = (function () {
 })();
 var UI = (function () {
   var $c, sel = null, flash = null, B = null, timer = null, speed = 1, logN = 0;
+  // จำความเร็วรบที่เลือกไว้ (×1-×8) ข้ามรัน — ข้ามไปผลไม่จำ
+  function loadSpeed() { try { var v = +localStorage.getItem('ob_speed'); return [1, 2, 4, 8].indexOf(v) >= 0 ? v : 1; } catch (e) { return 1; } }
+  function saveSpeed(v) { try { localStorage.setItem('ob_speed', String(v)); } catch (e) { } }
 
   function h(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
   var TAG_EL = { fire: 1, water: 1, earth: 1, metal: 1, wood: 1 };
@@ -215,7 +218,7 @@ var UI = (function () {
 
   // ---------- รบ ----------
   function startBattle() {
-    B = Game.makeBattle(); logN = 0; speed = 1;
+    B = Game.makeBattle(); logN = 0; speed = loadSpeed();
     Game.setScreen('battle');
     renderBattle();
     runTimer();
@@ -236,7 +239,7 @@ var UI = (function () {
     s += '<div class="bboard">';
     sd.items.forEach(function (it, i) {
       var d = it.def;
-      s += '<div class="bitem t' + it.tier + ' s' + d.size + ' el-' + elemOf(d) + '" id="bi-' + who + '-' + i + '" title="' + h(itemDescr(d, it.tier)) + '">' + iconHtml(d) + elBadge(d) + '<span class="nm">' + d.name + '</span><span class="use" id="bu-' + who + '-' + i + '"></span><div class="cdbar"><i id="bc-' + who + '-' + i + '"></i></div></div>';
+      s += '<div class="bitem t' + it.tier + ' s' + d.size + ' el-' + elemOf(d) + ' ' + posCls(it.pos) + '" id="bi-' + who + '-' + i + '" title="' + h(itemDescr(d, it.tier)) + '">' + iconHtml(d) + elBadge(d) + '<span class="nm">' + d.name + '</span><span class="use" id="bu-' + who + '-' + i + '"></span><div class="cdbar"><i id="bc-' + who + '-' + i + '"></i></div></div>';
     });
     s += '</div></div>';
     return s;
@@ -362,7 +365,7 @@ var UI = (function () {
       case 'mv': Game.move(sel, +t.getAttribute('data-dir')); break;
       case 'unsel': sel = null; break;
       case 'fight': sel = null; setFlash(null); return startBattle();
-      case 'speed': speed = +t.getAttribute('data-v'); return renderBattleCtl();
+      case 'speed': speed = +t.getAttribute('data-v'); saveSpeed(speed); return renderBattleCtl();
       case 'skip': if (B && !B.over) { clearInterval(timer); timer = null; Combat.runAll(B); updateBattle(); renderResult(); } return;
       case 'next': if (B) { var ab = Game.afterBattle(B.result); B = null; setFlash(ab && ab.bonus ? (ab.reward ? 'ปราบโจรสลัด ได้ทอง +' + ab.reward : 'รอดจากโจรสลัดมาได้ ไม่เสียอะไร') : (ab && ab.total ? 'ชนะได้ทอง +' + ab.total + (ab.bonus ? ' (โบนัสชนะติด ' + ab.streak + ' = +' + ab.bonus + ')' : '') + ' + ทองรายวัน → ตอนนี้มี ' + G.gold : 'วันใหม่ ได้ทองรายวัน ตอนนี้มี ' + G.gold), 'good'); } break;
       case 'sfx': SFX.toggle(); SFX.play('click'); break;

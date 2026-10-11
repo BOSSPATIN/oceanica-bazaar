@@ -577,3 +577,21 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
 /* ภาพในการ์ดไม่รับเมาส์เอง (ให้การ์ดเป็นตัวลาก) — draggable=false บน img ทำให้ลากการ์ดแม่ไม่ได้ใน Chrome */
 .icimg { pointer-events: none; -webkit-user-drag: none; user-select: none; }
 .item .nm, .item .cd, .item .elb, .bitem .nm { pointer-events: none; }
+
+/* ===== รอบ 20: หน้ารบเต็มจอบนคอมกว้าง-สูง (กระดานรบ 5×2) + จำความเร็ว ===== */
+.bboard .bitem { grid-row: 1; }
+.bboard .p0 { grid-column-start: 1; } .bboard .p1 { grid-column-start: 2; } .bboard .p2 { grid-column-start: 3; } .bboard .p3 { grid-column-start: 4; } .bboard .p4 { grid-column-start: 5; }
+.bboard .p5 { grid-column-start: 6; } .bboard .p6 { grid-column-start: 7; } .bboard .p7 { grid-column-start: 8; } .bboard .p8 { grid-column-start: 9; } .bboard .p9 { grid-column-start: 10; }
+.bboard .bitem.s1 { grid-column-end: span 1; } .bboard .bitem.s2 { grid-column-end: span 2; } .bboard .bitem.s3 { grid-column-end: span 3; }
+@media (min-width: 1300px) and (min-height: 861px) {
+  .bboard { grid-template-columns: repeat(5, 1fr); grid-template-rows: auto auto; gap: 8px; }
+  .bboard .c1 { grid-column-start: 1; } .bboard .c2 { grid-column-start: 2; } .bboard .c3 { grid-column-start: 3; } .bboard .c4 { grid-column-start: 4; } .bboard .c5 { grid-column-start: 5; }
+  .bboard .r1 { grid-row: 1; } .bboard .r2 { grid-row: 2; }
+  .bitem { height: 118px; } .bitem .ic { font-size: 44px; } .bitem .nm { font-size: 14px; padding: 2px 10px; } .bitem .use { font-size: 13px; padding: 1px 7px; } .bitem .elb { font-size: 12px; padding: 1px 7px; }
+  .bitem:has(.icimg.full) .nm { bottom: 8px; left: 5px; right: 5px; } .cdbar { height: 8px; }
+  .side { padding: 8px 12px 8px 18px; margin: 6px 0; } .side .sh { font-size: 17px; } .hic.big { width: 44px; height: 44px; font-size: 26px; }
+  .side .elt { font-size: 14px; } .bar.hp.big { height: 30px; } .bar.hp.big em { font-size: 17px; top: 5px; } .status { font-size: 15px; }
+  .vs { font-size: 26px; padding: 6px; } .bhead h2 { font-size: 24px; } .bctl { font-size: 15px; } .bctl button.tiny { font-size: 14px; padding: 2px 10px; }
+  .blog { height: 150px; font-size: 15px; } .float { font-size: 26px; } .float.fcrit { font-size: 34px; }
+  .hasres .blog { display: none; } .banner { font-size: 42px; } .sum .big { font-size: 18px; } .dmgsum .drow { font-size: 14px; }
+}
