@@ -501,3 +501,62 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
 @media (min-width: 1300px) and (min-height: 521px) and (max-height: 860px) {
   .elem .tl { font-size: 11px; margin-top: 1px; }
 }
+
+/* ===== รอบ 18: กระดาน 5×2 + แผงธาตุแนวตั้งซ้าย + ปุ่มสุ่มร้านใต้ร้าน ===== */
+/* ตำแหน่งบนกระดาน: โหมดแถวเดียว (p0-p9) เป็นค่าเริ่มต้น */
+.board .slot, .board .item { grid-row: 1; }
+.board .p0 { grid-column-start: 1; } .board .p1 { grid-column-start: 2; } .board .p2 { grid-column-start: 3; } .board .p3 { grid-column-start: 4; } .board .p4 { grid-column-start: 5; }
+.board .p5 { grid-column-start: 6; } .board .p6 { grid-column-start: 7; } .board .p7 { grid-column-start: 8; } .board .p8 { grid-column-start: 9; } .board .p9 { grid-column-start: 10; }
+.board .item.s1 { grid-column-end: span 1; } .board .item.s2 { grid-column-end: span 2; } .board .item.s3 { grid-column-end: span 3; }
+.board .slot { grid-column-end: span 1; }
+/* โหมด 5×2: คอมกว้าง + มือถือแนวตั้ง */
+@media (min-width: 1300px), (max-width: 1060px) and (orientation: portrait) {
+  .board { grid-template-columns: repeat(5, 1fr); grid-template-rows: auto auto; }
+  .board .c1 { grid-column-start: 1; } .board .c2 { grid-column-start: 2; } .board .c3 { grid-column-start: 3; } .board .c4 { grid-column-start: 4; } .board .c5 { grid-column-start: 5; }
+  .board .r1 { grid-row: 1; } .board .r2 { grid-row: 2; }
+}
+/* คอลัมน์: colE (ธาตุ) | colL (กระดาน) | colR (ร้าน) — โหมดคอลัมน์เดียวเรียง กระดาน → ธาตุ → ร้าน */
+.shopgrid { display: grid; grid-template-columns: 1fr; }
+.colE { order: 2; } .colL { order: 1; } .colR { order: 3; }
+.shopfoot { text-align: center; margin: 6px 0 2px; }
+.shopfoot button { font-size: 14px; padding: 4px 14px; }
+@media (min-width: 1300px) and (min-height: 521px) {
+  .shopgrid { grid-template-columns: 250px 1fr 40%; gap: 14px; }
+  .colE { order: 1; } .colL { order: 2; } .colR { order: 3; }
+  .colE .elems { flex-direction: column; gap: 8px; flex-wrap: nowrap; }
+  .colE .elem { min-width: 0; flex: none; padding: 7px 10px 7px 30px; }
+  .colE .elem b { font-size: 17px; display: block; margin-bottom: 1px; } .colE .elem .cnt { float: none; position: absolute; right: 10px; top: 7px; font-size: 16px; }
+  .colE .elem .tl { font-size: 13px; line-height: 1.3; margin-top: 3px; padding-left: 2px; }
+  .colE h3 { margin-top: 10px; }
+  /* กระดาน 5×2 ใหญ่ */
+  .board { gap: 8px; } .board .slot, .item { height: 170px; }
+  .item .ic { font-size: 64px; } .item .nm, .item.s1 .nm { font-size: 15px; padding: 2px 10px; }
+  .item:has(.icimg.full) .nm { bottom: 5px; left: 5px; right: 5px; } .item .cd { font-size: 13px; } .item .elb { font-size: 12px; padding: 1px 7px; }
+  .icimg.full { -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 78%, rgba(0,0,0,.4) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 78%, rgba(0,0,0,.4) 100%); }
+  .stash .item { width: 130px; height: 100px; }
+  /* ร้าน: ภาพใหญ่ขึ้น ปุ่มสุ่มอยู่ใต้ร้าน */
+  .offers { gap: 10px; } .offer { min-height: 150px; }
+  .offer .oh { font-size: 17px; padding: 6px 10px 5px; } .offer .oh .icimg.thumb, .icimg.thumb { width: 72px; height: 72px; border-radius: 6px; }
+  .offer .oh .ic { font-size: 40px; } .offer > .info { font-size: 14px; padding: 4px 10px; } .offer > .dim { font-size: 12.5px; }
+  .shopfoot { margin: 8px 0 4px; } .shopfoot button { font-size: 15px; padding: 5px 18px; }
+}
+/* คอมกว้างแต่เตี้ย: ลดขนาดกระดาน 5×2 ให้ 2 แถวยังพอดี */
+@media (min-width: 1300px) and (min-height: 521px) and (max-height: 860px) {
+  .board { gap: 5px; } .board .slot, .item { height: 108px; } .item .ic { font-size: 40px; } .item .nm, .item.s1 .nm { font-size: 12px; }
+  .stash .item { width: 90px; height: 70px; }
+  .colE .elem { padding: 4px 8px 4px 24px; } .colE .elem b { font-size: 14px; } .colE .elem .cnt { font-size: 13px; top: 4px; } .colE .elem .tl { font-size: 11px; line-height: 1.2; margin-top: 1px; }
+  .offer { min-height: 0; height: 122px; } .offer .oh .icimg.thumb, .icimg.thumb { width: 44px; height: 44px; } .offer .oh { font-size: 14px; padding: 3px 8px 2px; } .offer > .info { font-size: 12px; padding: 2px 8px; max-height: 32px; }
+  .shopfoot { margin: 4px 0 2px; } .shopfoot button { font-size: 12px; padding: 2px 10px; }
+  .shopgrid { grid-template-columns: 210px 1fr 40%; gap: 10px; }
+}
+/* มือถือแนวตั้ง: 5×2 การ์ดใหญ่ขึ้น */
+@media (max-width: 1060px) and (orientation: portrait) {
+  .board { gap: 4px; } .board .slot, .item { height: 92px; } .item .ic { font-size: 32px; } .item .nm, .bitem .nm { font-size: 11.5px; } .item.s1 .nm { font-size: 11px; }
+  .shopfoot button { font-size: 13px; }
+}
+/* มือถือแนวนอน: ปุ่มสุ่มร้านเล็ก */
+@media (orientation: landscape) and (max-height: 520px) {
+  .shopfoot { margin: 2px 0 0; } .shopfoot button { font-size: 9px; padding: 0 6px; }
+  .colE h3 { display: none; } .colE .elems { margin: 2px 0; }
+  h2 { padding-right: 10px; }
+}

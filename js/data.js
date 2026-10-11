@@ -4,6 +4,7 @@
 
 const BAL = {
   BOARD_SLOTS: 10,
+  BOARD_ROW: 5,        // กระดาน 2 แถว แถวละ 5 — ของชิ้นเดียวต้องอยู่แถวเดียวกัน (ช่อง 5 ติดกับ 6)
   STASH_SLOTS: 8,
   START_GOLD: 10,
   INCOME_BASE: 8,      // ทองต่อวัน = INCOME_BASE + day

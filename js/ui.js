@@ -134,9 +134,10 @@ var UI = (function () {
   }
 
   // ---------- ร้าน / กระดาน ----------
-  function itemBox(it, extra) {
+  function posCls(p) { return 'p' + p + ' r' + (Math.floor(p / BAL.BOARD_ROW) + 1) + ' c' + (p % BAL.BOARD_ROW + 1); }
+  function itemBox(it, extra, cls) {
     var d = ITEM_BY_ID[it.id];
-    return '<div class="item t' + it.tier + (sel === it.uid ? ' sel' : '') + ' s' + d.size + ' el-' + elemOf(d) + '" draggable="true" data-uid="' + it.uid + '" data-size="' + d.size + '" style="' + (extra || '') + '" title="' + h(itemDescr(d, it.tier)) + '">' +
+    return '<div class="item t' + it.tier + (sel === it.uid ? ' sel' : '') + ' s' + d.size + ' el-' + elemOf(d) + (cls ? ' ' + cls : '') + '" draggable="true" data-uid="' + it.uid + '" data-size="' + d.size + '" style="' + (extra || '') + '" title="' + h(itemDescr(d, it.tier)) + '">' +
       '' + iconHtml(d) + elBadge(d) + '<span class="nm">' + d.name + '</span><span class="cd">' + (d.cd ? (d.cd / 1000) + 'วิ' : 'ติดตัว') + '</span></div>';
   }
   function renderShop() {
@@ -148,13 +149,13 @@ var UI = (function () {
     s += '<div class="st bad">⛵ เรือเหลือ <b>' + '⛵'.repeat(G.lives) + '</b></div>';
     s += '<button class="tiny" data-act="sfx" title="เปิด/ปิดเสียง">' + (SFX.isOn() ? '🔊' : '🔇') + '</button></div>';
     s += flashHtml();
-    s += '<div class="shopgrid"><div class="colL">';
+    s += '<div class="shopgrid"><div class="colE"><h3>โบนัสธาตุ <small>ครบ 3 / 5 ชิ้นบนกระดาน</small></h3>' + elemPanel(G.board.map(function (it) { return it.id; })) + '</div><div class="colL">';
     // กระดาน
-    s += '<h2>กระดานเรือ <small>10 ช่อง · ลากวางได้ (ลากทับชิ้นอื่น = สลับที่) · คลิกชิ้นเพื่อจัดการ · ชิ้นข้างเคียง = ติดกันบนกระดาน</small></h2>';
+    s += '<h2>กระดานเรือ <small>2 แถว แถวละ 5 ช่อง · ของชิ้นเดียวอยู่แถวเดียวกัน · ช่อง 5 ติดกับ 6 · ลากวาง/ลากทับ = สลับที่</small></h2>';
     s += '<div class="board" id="board">';
     var occ = Game.occupied();
-    for (var i = 0; i < BAL.BOARD_SLOTS; i++) s += '<div class="slot" data-pos="' + i + '" style="grid-column:' + (i + 1) + '">' + (i + 1) + '</div>';
-    G.board.forEach(function (it) { var d = ITEM_BY_ID[it.id]; s += itemBox(it, 'grid-column:' + (it.pos + 1) + ' / span ' + d.size); });
+    for (var i = 0; i < BAL.BOARD_SLOTS; i++) s += '<div class="slot ' + posCls(i) + '" data-pos="' + i + '">' + (i + 1) + '</div>';
+    G.board.forEach(function (it) { s += itemBox(it, '', posCls(it.pos)); });
     s += '</div>';
     // แถบจัดการชิ้นที่เลือก
     var f = sel !== null ? findSel() : null;
@@ -166,7 +167,6 @@ var UI = (function () {
       s += '<button class="on" data-act="sell">ขาย +' + sellPrice(d, f.it.tier) + ' ทอง</button><button data-act="unsel">✕</button></div></div>';
     }
     // โบนัสธาตุ
-    s += '<h3>โบนัสธาตุ <small>ธาตุเดียวกันบนกระดานครบ 3 / 5 ชิ้น (ชี้เพื่อดูโบนัส)</small></h3>' + elemPanel(G.board.map(function (it) { return it.id; }));
     // ช่องเก็บ
     s += '<h3>ช่องเก็บ <small>' + G.stash.length + '/' + BAL.STASH_SLOTS + ' · ของในช่องเก็บไม่ร่วมรบ · ลากของจากกระดานมาวางที่นี่ได้</small></h3><div class="stash" id="stash">';
     G.stash.forEach(function (it) { s += itemBox(it); });
@@ -176,7 +176,8 @@ var UI = (function () {
     s += '<h3>ตำราติดตัว</h3><div class="skills">' + G.skills.map(function (sk) { var sd = SKILL_BY_ID[sk.id]; return '<span class="skill t' + sk.tier + '" title="' + h(skillDescr(sd, sk.tier)) + '">' + sd.icon + ' ' + sd.name + ' ' + tierTag(sk.tier) + ' <span class="dim">' + skillDescr(sd, sk.tier) + '</span></span>'; }).join('') + '</div>';
     s += '</div><div class="colR">';
     // ร้าน
-    s += '<h2>ตลาดท่าเรือ <span class="goldbadge" title="ทองที่มีตอนนี้">💰 ' + G.gold + ' ทอง</span><small>วันที่ ' + G.day + ' · ซื้อชิ้นเดิมซ้ำ = รวมร่าง · 🔒 ล็อก = เก็บไว้ถึงวันถัดไป</small><button class="tiny" data-act="reroll" style="float:right"' + (G.gold < BAL.REROLL_COST && !G.freeRerolls ? ' disabled' : '') + '>🔄 สุ่มร้านใหม่ (' + (G.freeRerolls ? 'ฟรี ' + G.freeRerolls + ' ครั้ง' : BAL.REROLL_COST + ' ทอง') + ') [R]</button></h2>';
+    s += '<h2>ตลาดท่าเรือ <span class="goldbadge" title="ทองที่มีตอนนี้">💰 ' + G.gold + ' ทอง</span><small>วันที่ ' + G.day + ' · ซื้อชิ้นเดิมซ้ำ = รวมร่าง · 🔒 ล็อก = เก็บไว้ถึงวันถัดไป</small></h2>';
+    var rerollBtn = '<button data-act="reroll"' + (G.gold < BAL.REROLL_COST && !G.freeRerolls ? ' disabled' : '') + '>🔄 สุ่มร้านใหม่ (' + (G.freeRerolls ? 'ฟรี ' + G.freeRerolls + ' ครั้ง' : BAL.REROLL_COST + ' ทอง') + ') [R]</button>';
     s += '<div class="offers">';
     G.shop.forEach(function (o, i) {
       var c = Game.canBuy(i), own;
@@ -191,7 +192,7 @@ var UI = (function () {
         s += '<div class="ob">' + (o.sold ? '<span class="dim">เรียนแล้ว</span>' : '<button class="pri" data-act="buy" data-i="' + i + '"' + (c.ok ? '' : ' disabled') + '>เรียน ' + o.cost + '<span class="bx"> ทอง</span></button>' + (c.ok ? '' : '<span class="bad"> ' + c.why + '</span>')) + '</div></div>';
       }
     });
-    s += '</div>';
+    s += '</div><div class="shopfoot">' + rerollBtn + '</div>';
     // ผีวันนี้ (ดูก่อนรบ)
     var gs = G.bonusFight ? Game.pirateSpec() : Game.ghostSpec(G.day, G.seed);
     s += '<h3>' + (G.bonusFight ? '🏴‍☠️ โจรสลัดที่จะเจอ (รบพิเศษ)' : '👻 ผีที่จะเจอวันนี้') + ' <small>ดูก่อนแล้วจัดของรับมือ</small></h3>';

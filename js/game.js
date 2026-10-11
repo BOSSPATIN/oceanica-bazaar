@@ -68,9 +68,11 @@ var Game = (function () {
     G.board.forEach(function (it) { var d = ITEM_BY_ID[it.id]; for (var i = 0; i < d.size; i++) occ[it.pos + i] = it; });
     return occ;
   }
+  function sameRow(pos, size) { return Math.floor(pos / BAL.BOARD_ROW) === Math.floor((pos + size - 1) / BAL.BOARD_ROW); }
   function findSlot(size, ignoreUid) {
     var occ = occupied();
     for (var p = 0; p + size <= BAL.BOARD_SLOTS; p++) {
+      if (!sameRow(p, size)) continue;
       var ok = true;
       for (var i = 0; i < size; i++) if (occ[p + i] && occ[p + i].uid !== ignoreUid) { ok = false; break; }
       if (ok) return p;
@@ -151,6 +153,7 @@ var Game = (function () {
     var f = findItem(uid); if (!f || f.where !== 'board') return { ok: false };
     var it = f.it, d = ITEM_BY_ID[it.id], np = it.pos + dir;
     if (np < 0 || np + d.size > BAL.BOARD_SLOTS) return { ok: false };
+    if (!sameRow(np, d.size)) return { ok: false, why: 'ของชิ้นเดียวต้องอยู่แถวเดียวกัน' };
     var occ = occupied();
     var blocker = dir < 0 ? occ[np] : occ[np + d.size - 1];
     if (blocker && blocker.uid !== it.uid) {
@@ -164,7 +167,7 @@ var Game = (function () {
   }
 
   function fits(pos, size, ignore) {
-    if (pos < 0 || pos + size > BAL.BOARD_SLOTS) return false;
+    if (pos < 0 || pos + size > BAL.BOARD_SLOTS || !sameRow(pos, size)) return false;
     var occ = occupied();
     for (var i = 0; i < size; i++) if (occ[pos + i] && (ignore || []).indexOf(occ[pos + i].uid) < 0) return false;
     return true;
@@ -174,6 +177,7 @@ var Game = (function () {
     var f = findItem(uid); if (!f) return { ok: false };
     var it = f.it, d = ITEM_BY_ID[it.id];
     pos = Math.max(0, Math.min(BAL.BOARD_SLOTS - d.size, pos));
+    if (!sameRow(pos, d.size)) { var rowEnd = (Math.floor(pos / BAL.BOARD_ROW) + 1) * BAL.BOARD_ROW; pos = Math.max(Math.floor(pos / BAL.BOARD_ROW) * BAL.BOARD_ROW, rowEnd - d.size); }  // ดันให้อยู่ในแถวเดียวกัน
     var occ = occupied(), blockers = [];
     for (var i = 0; i < d.size; i++) { var b = occ[pos + i]; if (b && b.uid !== uid && blockers.indexOf(b) < 0) blockers.push(b); }
     if (blockers.length === 0) {
@@ -281,10 +285,10 @@ var Game = (function () {
     var rnd = Combat.mulberry((seed + day * 31337) >>> 0);
     var hero = HEROES[Math.floor(rnd() * HEROES.length)];
     var slots = BAL.GHOST_SLOTS(day), pos = 0, items = [], guard = 0, tday = day - BAL.GHOST_TIER_LAG;
-    hero.items.forEach(function (id) { if (pos + ITEM_BY_ID[id].size <= slots) { items.push({ id: id, tier: rollTier(rnd, tday), pos: pos }); pos += ITEM_BY_ID[id].size; } });
-    while (pos < slots && guard++ < 60) {
+    hero.items.forEach(function (id) { if (pos + ITEM_BY_ID[id].size <= slots && sameRow(pos, ITEM_BY_ID[id].size)) { items.push({ id: id, tier: rollTier(rnd, tday), pos: pos }); pos += ITEM_BY_ID[id].size; } });
+    while (pos < slots && guard++ < 200) {
       var def = rndPick(rnd, ITEMS, 'w');
-      if (def.size > slots - pos) continue;
+      if (def.size > slots - pos || !sameRow(pos, def.size)) continue;
       items.push({ id: def.id, tier: rollTier(rnd, tday), pos: pos }); pos += def.size;
     }
     var skills = [{ id: hero.skill, tier: Math.min(3, Math.floor(day / 4)) }];
@@ -341,7 +345,7 @@ var Game = (function () {
 
   return {
     get: function () { return G; }, newRun: newRun, genShop: genShop, canBuy: canBuy, buy: buy, reroll: reroll, sell: sell, toStash: toStash, toBoard: toBoard, move: move,
-    findSlot: findSlot, occupied: occupied, placeAt: placeAt, fits: fits, level: level, maxHp: maxHp, income: income, playerSpec: playerSpec, ghostSpec: ghostSpec, pirateSpec: pirateSpec, makeBattle: makeBattle, afterBattle: afterBattle,
+    findSlot: findSlot, occupied: occupied, placeAt: placeAt, fits: fits, sameRow: sameRow, level: level, maxHp: maxHp, income: income, playerSpec: playerSpec, ghostSpec: ghostSpec, pirateSpec: pirateSpec, makeBattle: makeBattle, afterBattle: afterBattle,
     toggleLock: toggleLock, genEvent: genEvent, chooseEvent: chooseEvent, loadStats: loadStats, winReward: winReward,
     save: save, load: load, clear: clear, setScreen: function (s) { G.screen = s; save(); },
   };
