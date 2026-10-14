@@ -30,6 +30,8 @@ var SFX = (function () {
 })();
 var UI = (function () {
   var $c, sel = null, flash = null, B = null, timer = null, speed = 1, logN = 0;
+  // ยืนยันออกรบ 2 จังหวะ (บอสสั่ง 10-14): กดครั้งแรก = เตรียม / กดอีกครั้ง = ออกรบจริง · กดรัวเกิน (ห่าง < 450ms) ไม่นับ กันกดพลาดตอนรัว Space ผ่านหน้าผล
+  var fightArm = 0, fightLast = 0, armTimer = null;
   // จำความเร็วรบที่เลือกไว้ (×1-×8) ข้ามรัน — ข้ามไปผลไม่จำ
   function loadSpeed() { try { var v = +localStorage.getItem('ob_speed'); return [1, 2, 4, 8].indexOf(v) >= 0 ? v : 1; } catch (e) { return 1; } }
   function saveSpeed(v) { try { localStorage.setItem('ob_speed', String(v)); } catch (e) { } }
@@ -203,8 +205,9 @@ var UI = (function () {
     s += gs.items.map(function (it) { var d = ITEM_BY_ID[it.id]; return '<span class="gi t' + it.tier + '" title="' + h(itemDescr(d, it.tier)) + '">' + d.icon + ' ' + d.name + '</span>'; }).join('');
     var ge = elemPanel(gs.items.map(function (it) { return it.id; }), true); if (ge) s += '<br><span class="warn">โบนัสธาตุ: ' + ge + '</span>';
     s += '</div></div>';
-    if (G.bonusFight) s += '<div class="row c fightrow"><button class="big pri" data-act="fight">🏴‍☠️ สู้โจรสลัด (Enter)</button><div class="dim">ชนะได้ทอง +' + G.bonusFight.reward + ' · แพ้ไม่เสียเรือ · ไม่นับเป็นวัน</div></div>';
-    else s += '<div class="row c fightrow"><button class="big pri glow" data-act="fight">⚔️ ออกรบ วันที่ ' + G.day + ' (Enter)</button><div class="dim">ชนะได้ทอง <b class="gp">+' + Game.winReward(G.streak + 1).total + '</b>' + (G.streak >= 1 ? ' (ชนะติด ' + (G.streak + 1) + ')' : '') + ' · ชนะติดต่อกันได้เพิ่มขั้นละ +' + BAL.STREAK_STEP + ' สูงสุด +' + BAL.STREAK_CAP + ' · แพ้เสียเรือ 1 ลำ รีเซ็ตชนะติด · ทองรายวัน +' + Game.income() + ' ได้ทุกวัน</div></div>';
+    var fbtn = fightArm ? '<button class="big pri arm" data-act="fight">✅ ยืนยันออกรบ? กด Space อีกครั้ง</button> <button class="big" data-act="unarm">ยกเลิก (Esc)</button>' : null;
+    if (G.bonusFight) s += '<div class="row c fightrow">' + (fbtn || '<button class="big pri" data-act="fight">🏴‍☠️ สู้โจรสลัด (Space)</button>') + '<div class="dim">ชนะได้ทอง +' + G.bonusFight.reward + ' · แพ้ไม่เสียเรือ · ไม่นับเป็นวัน</div></div>';
+    else s += '<div class="row c fightrow">' + (fbtn || '<button class="big pri glow" data-act="fight">⚔️ ออกรบ วันที่ ' + G.day + ' (Space)</button>') + '<div class="dim">ชนะได้ทอง <b class="gp">+' + Game.winReward(G.streak + 1).total + '</b>' + (G.streak >= 1 ? ' (ชนะติด ' + (G.streak + 1) + ')' : '') + ' · ชนะติดต่อกันได้เพิ่มขั้นละ +' + BAL.STREAK_STEP + ' สูงสุด +' + BAL.STREAK_CAP + ' · แพ้เสียเรือ 1 ลำ รีเซ็ตชนะติด · ทองรายวัน +' + Game.income() + ' ได้ทุกวัน</div></div>';
     s += '<div class="row r savebar"><span class="lnk" data-act="exportsave" title="คัดลอกโค้ดเซฟไปวางในเครื่องอื่น (คอม-มือถือ)">📋 คัดลอกโค้ดเซฟ</span><span class="lnk" data-act="importsave">📥 วางโค้ดเซฟ</span><span class="lnk" data-act="abandon">ล้มเลิกรันนี้</span></div>';
     s += '</div></div>';
     $c.innerHTML = s;
@@ -217,6 +220,14 @@ var UI = (function () {
   }
 
   // ---------- รบ ----------
+  function disarm(rerender) { fightArm = 0; clearTimeout(armTimer); armTimer = null; if (rerender) render(); }
+  // ปุ่มออกรบ: ครั้งแรกเตรียม (ปุ่มเปลี่ยนเป็น "ยืนยัน" 6 วิ) ครั้งที่สองออกรบ — กดถี่กว่า 450ms ไม่นับทั้งสองจังหวะ
+  function fightPress() {
+    var now = Date.now(), gap = now - fightLast; fightLast = now;
+    if (gap < 450) { if (fightArm) { disarm(true); setFlash('กดรัวเกินไป ยกเลิกการยืนยันออกรบ — กดใหม่ช้าๆ 2 ครั้ง', 'bad'); } return; }
+    if (!fightArm) { fightArm = now; clearTimeout(armTimer); armTimer = setTimeout(function () { disarm(true); }, 6000); setFlash('กด Space หรือคลิกอีกครั้งเพื่อยืนยันออกรบ', 'good'); return render(); }
+    disarm(false); sel = null; setFlash(null); startBattle();
+  }
   function startBattle() {
     B = Game.makeBattle(); logN = 0; speed = loadSpeed();
     Game.setScreen('battle');
@@ -246,7 +257,7 @@ var UI = (function () {
   }
   function renderBattle() {
     if (!B) { Game.setScreen('shop'); return renderShop(); }
-    var s = '<div class="bhead"><h2 style="margin:0">⚔️ รบวันที่ ' + Game.get().day + ' <small id="bt">0.0 วิ</small></h2><div class="bctl">ความเร็ว ' + [1, 2, 4, 8].map(function (x) { return '<button class="tiny' + (speed === x ? ' on' : '') + '" data-act="speed" data-v="' + x + '">×' + x + '</button>'; }).join('') + ' <button class="tiny" data-act="skip">⏩ ข้ามไปผล</button></div></div>';
+    var s = '<div class="bhead"><h2 style="margin:0">⚔️ รบวันที่ ' + Game.get().day + ' <small id="bt">0.0 วิ</small></h2><div class="bctl">ความเร็ว ' + [1, 2, 4, 8].map(function (x) { return '<button class="tiny' + (speed === x ? ' on' : '') + '" data-act="speed" data-v="' + x + '">×' + x + '</button>'; }).join('') + ' <button class="tiny" data-act="skip">⏩ ข้ามไปผล (Space)</button></div></div>';
     s += sideBox(B.b, 'b') + '<div class="vs">VS <span class="dim" id="storm"></span></div>' + sideBox(B.a, 'a');
     s += '<div class="blog" id="blog"></div>';
     s += '<div id="bres"></div>';
@@ -333,7 +344,7 @@ var UI = (function () {
     s += '<div class="sum ' + r + '"><div class="big">' + head + '</div>';
     s += '<div class="dmgsum"><div class="dcol"><div class="dh">🟢 ฝ่ายเรา <small>ดาเมจรวม ' + Math.round(B.a.dealt) + '</small></div><div class="drow">โจมตี: ' + topItems(B.a, 'dealt') + '</div><div class="drow">ฮีล: ' + topItems(B.a, 'healed') + '</div><div class="drow">โล่: ' + topItems(B.a, 'shielded') + '</div></div>';
     s += '<div class="dcol"><div class="dh">🔴 ผี <small>ดาเมจรวม ' + Math.round(B.b.dealt) + '</small></div><div class="drow">โจมตี: ' + topItems(B.b, 'dealt') + '</div><div class="drow">ฮีล: ' + topItems(B.b, 'healed') + '</div><div class="drow">โล่: ' + topItems(B.b, 'shielded') + '</div></div></div>';
-    s += '<div class="row c"><button class="big pri" data-act="next">' + (G.bonusFight ? '⛵ กลับเข้าตลาด (Enter)' : r === 'win' && G.wins + 1 >= BAL.WIN_TARGET ? '🎉 จบรัน' : r === 'lose' && G.lives - 1 <= 0 ? 'เรือจม...' : '📅 วันถัดไป (Enter)') + '</button></div></div>';
+    s += '<div class="row c"><button class="big pri" data-act="next">' + (G.bonusFight ? '⛵ กลับเข้าตลาด (Space)' : r === 'win' && G.wins + 1 >= BAL.WIN_TARGET ? '🎉 จบรัน' : r === 'lose' && G.lives - 1 <= 0 ? 'เรือจม...' : '📅 วันถัดไป (Space)') + '</button></div></div>';
     el.innerHTML = s;
     el.scrollIntoView({ behavior: 'smooth' });
   }
@@ -400,6 +411,7 @@ var UI = (function () {
     var act = t.getAttribute('data-act') || (t.hasAttribute('data-pos') ? 'slot' : null), G = Game.get(), r;
     if (t.hasAttribute('data-uid') && !act) { var u = +t.getAttribute('data-uid'); sel = sel === u ? null : u; setFlash(sel !== null ? 'จิ้มช่องว่างบนกระดานเพื่อวาง หรือใช้ปุ่มด้านล่าง' : null, 'good'); return render(); }
     if (act === 'slot') { if (sel !== null) { var pr = Game.placeAt(sel, +t.getAttribute('data-pos')); setFlash(pr.ok ? (pr.msg || null) : pr.why, pr.ok ? 'good' : 'bad'); if (pr.ok) sel = null; render(); } return; }
+    if (fightArm && act !== 'fight') disarm(false);
     switch (act) {
       case 'start': Game.newRun(t.getAttribute('data-hero')); sel = null; setFlash('ออกเรือ! ซื้อของจากตลาดแล้วกดออกรบ', 'good'); break;
       case 'buy': r = Game.buy(+t.getAttribute('data-i')); setFlash(r.ok ? r.msg : r.why, r.ok ? 'good' : 'bad'); if (r.ok) SFX.play('buy'); break;
@@ -409,10 +421,11 @@ var UI = (function () {
       case 'board': r = Game.toBoard(sel); if (!r.ok) setFlash(r.why, 'bad'); break;
       case 'mv': Game.move(sel, +t.getAttribute('data-dir')); break;
       case 'unsel': sel = null; break;
-      case 'fight': sel = null; setFlash(null); return startBattle();
+      case 'fight': return fightPress();
+      case 'unarm': disarm(false); setFlash(null); break;
       case 'speed': speed = +t.getAttribute('data-v'); saveSpeed(speed); return renderBattleCtl();
       case 'skip': if (B && !B.over) { clearInterval(timer); timer = null; Combat.runAll(B); updateBattle(); renderResult(); } return;
-      case 'next': if (B) { var ab = Game.afterBattle(B.result); B = null; setFlash(ab && ab.bonus ? (ab.reward ? 'ปราบโจรสลัด ได้ทอง +' + ab.reward : 'รอดจากโจรสลัดมาได้ ไม่เสียอะไร') : (ab && ab.total ? 'ชนะได้ทอง +' + ab.total + (ab.bonus ? ' (โบนัสชนะติด ' + ab.streak + ' = +' + ab.bonus + ')' : '') + ' + ทองรายวัน → ตอนนี้มี ' + G.gold : 'วันใหม่ ได้ทองรายวัน ตอนนี้มี ' + G.gold), 'good'); } break;
+      case 'next': fightLast = Date.now(); if (B) { var ab = Game.afterBattle(B.result); B = null; setFlash(ab && ab.bonus ? (ab.reward ? 'ปราบโจรสลัด ได้ทอง +' + ab.reward : 'รอดจากโจรสลัดมาได้ ไม่เสียอะไร') : (ab && ab.total ? 'ชนะได้ทอง +' + ab.total + (ab.bonus ? ' (โบนัสชนะติด ' + ab.streak + ' = +' + ab.bonus + ')' : '') + ' + ทองรายวัน → ตอนนี้มี ' + G.gold : 'วันใหม่ ได้ทองรายวัน ตอนนี้มี ' + G.gold), 'good'); } break;
       case 'sfx': SFX.toggle(); SFX.play('click'); break;
       case 'exportsave': { var code = 'OB1.' + btoa(unescape(encodeURIComponent(JSON.stringify(G)))); var copied = false; try { if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(code); copied = true; } } catch (e) { } if (copied) { setFlash('คัดลอกโค้ดเซฟแล้ว ไปกด "วางโค้ดเซฟ" ที่อีกเครื่อง', 'good'); } else { window.prompt('คัดลอกโค้ดนี้ไปวางที่อีกเครื่อง', code); return; } break; }
       case 'importsave': { var inp = window.prompt('วางโค้ดเซฟ (ขึ้นต้น OB1.) จะทับรันปัจจุบัน'); if (!inp) return; try { var obj = JSON.parse(decodeURIComponent(escape(atob(inp.trim().replace(/^OB1\./, ''))))); if (!obj.heroId || !obj.board) throw new Error('bad'); localStorage.setItem('oceanica_bazaar_save_v1', JSON.stringify(obj)); Game.load(); sel = null; setFlash('โหลดเซฟจากโค้ดแล้ว', 'good'); } catch (e) { setFlash('โค้ดเซฟไม่ถูกต้อง', 'bad'); } break; }
@@ -429,11 +442,15 @@ var UI = (function () {
     var G = Game.get(); if (!G) return;
     if (G.screen === 'event' && (ev.key === '1' || ev.key === '2')) { var eb = document.querySelector('[data-act=evchoice][data-i="' + (+ev.key - 1) + '"]'); if (eb && !eb.disabled) eb.click(); return; }
     if (G.screen === 'shop' && (ev.key === 'r' || ev.key === 'R')) { var rb = document.querySelector('[data-act=reroll]'); if (rb && !rb.disabled) rb.click(); return; }
-    if (ev.key !== 'Enter') return;
-    if (G.screen === 'shop') return startBattle();
-    if (G.screen === 'battle' && B && B.over) { var b = document.querySelector('[data-act=next]'); if (b) b.click(); return; }
-    if (G.screen === 'battle' && B && !B.over) { var sk = document.querySelector('[data-act=skip]'); if (sk) sk.click(); return; }
-    if (G.screen === 'end') { var n = document.querySelector('[data-act=newrun]'); if (n) n.click(); }
+    if (ev.key === 'Escape') { if (fightArm) { disarm(true); setFlash(null); } return; }
+    var isSpace = ev.key === ' ' || ev.code === 'Space';
+    if (ev.key !== 'Enter' && !isSpace) return;
+    ev.preventDefault(); // กัน Space เลื่อนหน้า + กันปุ่มที่โฟกัสอยู่โดนกดซ้ำซ้อน
+    if (G.screen === 'shop') return fightPress();
+    // ข้าม/วันถัดไป นับเป็น "จังหวะกด" ด้วย — รัว Space ทะลุจากหน้าผลเข้าตลาด จะไม่ไปเตรียมออกรบจนกว่าจะหยุดกดก่อน
+    if (G.screen === 'battle' && B && B.over) { fightLast = Date.now(); var b = document.querySelector('[data-act=next]'); if (b) b.click(); return; }
+    if (G.screen === 'battle' && B && !B.over) { fightLast = Date.now(); var sk = document.querySelector('[data-act=skip]'); if (sk) sk.click(); return; }
+    if (G.screen === 'end' && !isSpace) { var n = document.querySelector('[data-act=newrun]'); if (n) n.click(); }
   }
 
   // ---------- ลาก-วาง ----------

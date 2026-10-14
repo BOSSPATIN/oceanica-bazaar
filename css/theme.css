@@ -689,3 +689,6 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
   .evt { padding: 10px 16px; } .evt .eh { font-size: 22px; } .evt .evr { font-size: 15px; } .evt button.wide { font-size: 15px; }
 }
 @media (min-width: 1300px) and (min-height: 861px) and (max-height: 960px) { .hasres .sum { padding: 3px 8px; } .hasres .sum .big { font-size: 14px; margin-bottom: 1px; } .hasres .dmgsum { margin: 2px 0; } .hasres .dmgsum .dcol { padding: 2px 8px; } .hasres .sum .row.c { margin: 2px 0 0; } .hasres .sum button.big { padding: 3px 14px; font-size: 15px; } }
+/* ปุ่มยืนยันออกรบ (จังหวะ 2) */
+button.pri.arm { background: linear-gradient(180deg, #3fb86a, #1f7a42); animation: glow 0.8s ease-in-out infinite; }
+button.pri.arm:hover:not(:disabled) { background: linear-gradient(180deg, #5ad184, #2a944f); }
