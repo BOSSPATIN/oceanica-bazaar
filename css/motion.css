@@ -1,0 +1,116 @@
+/* Oceanica Bazaar — motion.css (10-15): ความลื่นไหล — โหลดหลัง theme.css เพื่อทับ transition/hover เดิม
+   โมเมนต์หลัก = "คลื่นซัด" ตอนเข้าฉากรบ/จบรัน · ที่เหลือเป็น feedback: ของบินลงกระดาน ทองนับขึ้น การ์ดเอียง กัปตันมองตามเมาส์
+   ปิดการเคลื่อนไหวเชิงพื้นที่เมื่อ prefers-reduced-motion (คง fade/สี/สถานะไว้) */
+
+/* ---------- พื้นผิวของเบราว์เซอร์ให้เข้าธีม ---------- */
+::selection { background: var(--gold); color: var(--ink); }
+* { scrollbar-width: thin; scrollbar-color: var(--gold3) var(--night); }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--night); }
+*::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--gold), var(--gold3)); border: 2px solid var(--night); border-radius: 6px; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+.topbar .st b, .goldbadge, #bt, .bar.hp.big em { font-variant-numeric: tabular-nums; }
+
+/* ---------- ปุ่ม: กดแล้วรู้สึกได้ทันที ---------- */
+button { transition: transform .12s cubic-bezier(.16, 1, .3, 1), box-shadow .18s ease-out, filter .18s ease-out, background .18s ease-out; }
+button:hover:not(:disabled) { transform: translateY(-1px); }
+button:active:not(:disabled) { transform: translateY(1px) scale(.97); transition-duration: .06s; }
+
+/* ---------- การ์ดเอียงตามเมาส์ + แสงไล่ตามเมาส์ (เฉพาะเครื่องที่มี hover) ---------- */
+.has-hover .item, .has-hover .offer, .has-hover .hero { transition: transform .16s cubic-bezier(.16, 1, .3, 1), box-shadow .2s ease-out, filter .2s ease-out; transform-style: preserve-3d; }
+.has-hover .hero { position: relative; overflow: hidden; }
+.has-hover .item.tilt, .has-hover .offer.tilt, .has-hover .hero.tilt {
+  transform: perspective(720px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-4px) scale(1.035);
+  z-index: 5;
+}
+.has-hover .tilt::before {
+  content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(255, 244, 214, .22), rgba(255, 244, 214, .06) 35%, transparent 60%);
+  mix-blend-mode: screen;
+}
+.has-hover .item.dragging { transform: none; }
+
+/* ---------- กัปตันมองตามเมาส์ (แบบ page-mascot) ---------- */
+.hero .portrait span, .endhero .portrait span { display: inline-block; will-change: transform; transition: transform .18s cubic-bezier(.16, 1, .3, 1); }
+.has-hover .hero .portrait span, .has-hover .endhero .portrait span { transform: translate(calc(var(--gx, 0) * 8px), calc(var(--gy, 0) * 6px)) rotate(calc(var(--gx, 0) * 4deg)); }
+.has-hover .topbar .hb .hic { transition: transform .25s ease-out; transform: translate(calc(var(--mx, 0) * 2px), calc(var(--my, 0) * 2px)); }
+
+/* ---------- เปลี่ยนฉาก ---------- */
+#center { position: relative; }
+/* แบบเบา: หมึกจางเข้า (ตลาด/เหตุการณ์) */
+#center.enter { animation: inkIn .36s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes inkIn { from { opacity: 0; transform: translateY(8px); filter: saturate(.6); } to { opacity: 1; transform: none; filter: none; } }
+#center.enter.to-shop .fightrow, #center.enter.to-shop .ghostbox { animation: riseIn .5s .12s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* แบบใหญ่: คลื่นซัดเปิดฉาก (รบ/จบรัน) — เผยจากซ้ายไปขวาด้วย mask + แถบฟองคลื่นวิ่งนำหน้า */
+#center.wipe {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(100deg, #000 0 44%, transparent 56% 100%);
+  mask-image: linear-gradient(100deg, #000 0 44%, transparent 56% 100%);
+  -webkit-mask-size: 260% 100%; mask-size: 260% 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  animation: waveReveal .72s cubic-bezier(.3, .9, .3, 1) both;
+}
+@keyframes waveReveal {
+  0% { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
+  100% { -webkit-mask-position: 0 0; mask-position: 0 0; }
+}
+#cols { position: relative; }
+#cols.wiping { overflow: hidden; }
+#cols.wiping::after {
+  content: ''; position: absolute; top: -6%; bottom: -6%; left: 0; width: 22%; z-index: 50; pointer-events: none;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 400' preserveAspectRatio='none'><path d='M0 0 H60 C110 40 30 80 70 120 C110 160 20 200 70 240 C110 280 30 320 70 360 C90 380 70 400 60 400 H0 Z' fill='%23f3e9d2'/><path d='M0 0 H44 C84 40 14 80 52 120 C90 160 6 200 52 240 C90 280 14 320 52 360 C70 380 54 400 44 400 H0 Z' fill='%23e9b949'/><path d='M0 0 H28 C56 40 0 80 34 120 C60 160 0 200 34 240 C60 280 0 320 34 360 C44 380 36 400 28 400 H0 Z' fill='%231d4e89'/><g fill='%23f3e9d2'><circle cx='72' cy='110' r='6'/><circle cx='80' cy='230' r='7'/><circle cx='74' cy='350' r='5'/><circle cx='88' cy='60' r='4'/><circle cx='86' cy='300' r='4'/></g></svg>") right center / 100% 100% no-repeat;
+  filter: drop-shadow(6px 0 10px rgba(0, 0, 0, .55));
+  animation: waveBand .72s cubic-bezier(.3, .9, .3, 1) both;
+}
+@keyframes waveBand { 0% { transform: translateX(-110%); } 100% { transform: translateX(400%); } }
+
+/* ฉากรบ: สองฝ่ายไถลเข้าหากัน แล้ว VS กระแทก */
+#center.wipe.to-battle .side.b { animation: slideFromRight .6s .15s cubic-bezier(.16, 1, .3, 1) both; }
+#center.wipe.to-battle .side.a { animation: slideFromLeft .6s .25s cubic-bezier(.16, 1, .3, 1) both; }
+#center.wipe.to-battle .vs { animation: vsHit .55s .45s cubic-bezier(.16, 1, .3, 1) both; }
+#center.wipe.to-battle .bhead, #center.wipe.to-battle .blog { animation: riseIn .4s .5s cubic-bezier(.16, 1, .3, 1) both; }
+#center.wipe.to-battle .bboard .bitem { animation: riseIn .45s cubic-bezier(.16, 1, .3, 1) both; }
+#center.wipe.to-battle .bboard .bitem:nth-child(1) { animation-delay: .40s; } #center.wipe.to-battle .bboard .bitem:nth-child(2) { animation-delay: .44s; }
+#center.wipe.to-battle .bboard .bitem:nth-child(3) { animation-delay: .48s; } #center.wipe.to-battle .bboard .bitem:nth-child(4) { animation-delay: .52s; }
+#center.wipe.to-battle .bboard .bitem:nth-child(5) { animation-delay: .56s; } #center.wipe.to-battle .bboard .bitem:nth-child(6) { animation-delay: .60s; }
+#center.wipe.to-battle .bboard .bitem:nth-child(7) { animation-delay: .64s; } #center.wipe.to-battle .bboard .bitem:nth-child(8) { animation-delay: .68s; }
+#center.wipe.to-battle .bboard .bitem:nth-child(9) { animation-delay: .72s; } #center.wipe.to-battle .bboard .bitem:nth-child(10) { animation-delay: .76s; }
+@keyframes slideFromRight { from { opacity: 0; transform: translateX(48px); } to { opacity: 1; transform: none; } }
+@keyframes slideFromLeft { from { opacity: 0; transform: translateX(-48px); } to { opacity: 1; transform: none; } }
+@keyframes vsHit { 0% { opacity: 0; transform: scale(2.4); filter: blur(6px); } 60% { opacity: 1; transform: scale(.92); filter: none; } 100% { transform: scale(1); } }
+
+/* ---------- ระหว่างรบ: แถบ HP ลื่น ---------- */
+.bar.hp.big i { transition: width .28s cubic-bezier(.16, 1, .3, 1); }
+.bar.hp.big i.shd { transition: width .2s ease-out; }
+
+/* ---------- ซื้อของ: บินจากร้านไปลงกระดาน ---------- */
+.flyghost { position: fixed; z-index: 200; pointer-events: none; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 10px 12px rgba(0, 0, 0, .6)); will-change: transform; }
+.flyghost img { width: 100%; height: 100%; object-fit: contain; }
+.flyghost span { font-size: 36px; }
+.item.landing { opacity: 0; }
+.item.landed { animation: land .5s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes land { 0% { transform: scale(1.3); box-shadow: inset 0 0 0 3px var(--gold2), 0 0 26px var(--gold); } 100% { transform: none; } }
+.item.merged { animation: mergeFlash .85s ease-out both; }
+@keyframes mergeFlash { 0% { box-shadow: inset 0 0 0 3px var(--gold2), 0 0 0 0 rgba(233, 185, 73, .9); transform: scale(1.06); } 100% { box-shadow: inset 0 0 0 2px var(--gold3), 0 0 0 22px rgba(233, 185, 73, 0); transform: none; } }
+
+/* ---------- ทอง: นับขึ้น-ลง + เด้ง ---------- */
+.topbar .st.gp b, .goldbadge { display: inline-block; }
+.bump-up { animation: bumpUp .45s cubic-bezier(.16, 1, .3, 1); }
+.bump-down { animation: bumpDown .45s cubic-bezier(.16, 1, .3, 1); }
+@keyframes bumpUp { 30% { transform: scale(1.2) translateY(-2px); filter: brightness(1.35); } 100% { transform: none; filter: none; } }
+@keyframes bumpDown { 30% { transform: scale(.9) translateY(2px); filter: brightness(.75) saturate(.6); } 100% { transform: none; filter: none; } }
+
+/* ---------- ลดการเคลื่อนไหว ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #center.wipe, #center.enter { animation: fadeOnly .25s ease-out both; -webkit-mask-image: none; mask-image: none; }
+  #cols.wiping::after { display: none; }
+  #center.wipe.to-battle .side.a, #center.wipe.to-battle .side.b, #center.wipe.to-battle .vs, #center.wipe.to-battle .bhead, #center.wipe.to-battle .blog, #center.wipe.to-battle .bboard .bitem, #center.enter.to-shop .fightrow, #center.enter.to-shop .ghostbox { animation: fadeOnly .25s ease-out both; }
+  .flyghost { display: none; } .item.landing { opacity: 1; }
+  .item.landed, .item.merged, .bump-up, .bump-down { animation: none; }
+  button:hover:not(:disabled), button:active:not(:disabled) { transform: none; }
+  body { animation: none; }
+}
+@keyframes fadeOnly { from { opacity: 0; } to { opacity: 1; } }

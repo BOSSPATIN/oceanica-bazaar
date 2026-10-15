@@ -83,13 +83,14 @@ var UI = (function () {
 
   function render() {
     if ($c) $c.classList.remove('hasres');
-    var G = Game.get();
-    if (!G) return renderTitle();
-    if (G.screen === 'shop') return renderShop();
-    if (G.screen === 'battle') return renderBattle();
-    if (G.screen === 'event') return renderEvent();
-    if (G.screen === 'end') return renderEnd();
-    renderShop();
+    var G = Game.get(), key = !G ? 'title' : G.screen;
+    if (!G) renderTitle();
+    else if (G.screen === 'shop') renderShop();
+    else if (G.screen === 'battle') renderBattle();
+    else if (G.screen === 'event') renderEvent();
+    else if (G.screen === 'end') renderEnd();
+    else renderShop();
+    Motion.after(key); // แอนิเมชันเข้าฉาก (คลื่นซัด/หมึกจาง) + ทองนับขึ้น
   }
   function elemPanel(itemIds, compact) {
     var c = countElems(itemIds), bon = {};
@@ -233,6 +234,7 @@ var UI = (function () {
     B = Game.makeBattle(); logN = 0; speed = loadSpeed();
     Game.setScreen('battle');
     renderBattle();
+    Motion.after('battle');
     runTimer();
   }
   function runTimer() {
@@ -415,7 +417,7 @@ var UI = (function () {
     if (fightArm && act !== 'fight') disarm(false);
     switch (act) {
       case 'start': Game.newRun(t.getAttribute('data-hero')); sel = null; setFlash('ออกเรือ! ซื้อของจากตลาดแล้วกดออกรบ', 'good'); break;
-      case 'buy': r = Game.buy(+t.getAttribute('data-i')); setFlash(r.ok ? r.msg : r.why, r.ok ? 'good' : 'bad'); if (r.ok) SFX.play('buy'); break;
+      case 'buy': { var sn = Motion.snap(t.closest('.offer')); r = Game.buy(+t.getAttribute('data-i')); setFlash(r.ok ? r.msg : r.why, r.ok ? 'good' : 'bad'); if (r.ok) { SFX.play('buy'); render(); Motion.fly(sn); return; } break; }
       case 'reroll': r = Game.reroll(); setFlash(r.ok ? null : r.why, 'bad'); break;
       case 'sell': r = Game.sell(sel); sel = null; setFlash(r.msg, 'good'); break;
       case 'stash': r = Game.toStash(sel); if (!r.ok) setFlash(r.why, 'bad'); break;
