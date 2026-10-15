@@ -208,7 +208,8 @@ button.elb { padding: 3px 7px; margin: 1px; }
 .offer .info, .selbar .info { color: #d5daf8; font-size: 12px; margin-top: 2px; }
 .offer .ob { margin-top: auto; } .offer .ob button { margin: 2px 0 0; }
 .fightrow { margin-top: 12px; padding: 10px; border: 1px solid #4a4f7a; background: rgba(20,24,60,.8); }
-.heroes { display: flex; gap: 10px; justify-content: center; }
+.heroes { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.hero { min-width: 170px; }
 .hero { flex: 1; max-width: 300px; border: 1px solid #4a4f7a; background: rgba(40,44,84,.85); padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .hero .hn { font-size: 18px; font-weight: bold; color: #ffe9a8; }
 .hero .portrait { width: 90px; height: 110px; }

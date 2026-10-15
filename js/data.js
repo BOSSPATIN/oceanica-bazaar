@@ -25,11 +25,31 @@ const BAL = {
   STORM_DMG: 2,        // ดาเมจพายุ +2 ทุกวิ
   TICK: 100,
   // ผี (คู่ต่อสู้)
-  GHOST_HP_PER_DAY: 15,
-  GHOST_TIER_LAG: 2,   // ผีสุ่มระดับไอเทมเหมือนร้านเมื่อ 2 วันก่อน
-  GHOST_SLOTS: function (day) { return Math.min(10, 2 + day); },
-  GHOST_SKILLS: function (day) { return day >= 9 ? 2 : day >= 4 ? 1 : 0; },
+  // (10-15 บอสสั่ง "เกมง่ายไป ทำให้ยากขึ้น": HP/วัน 15→22, ระดับไอเทมตามร้านช้าลงแค่ 1 วัน, ช่อง 3+วัน, ตำราเสริมเร็วขึ้น, ผีเลือก "สาย" ให้ของเข้ากัน + บอสวัน 4/8/12)
+  GHOST_HP_PER_DAY: 19,
+  GHOST_TIER_LAG: 1,   // ผีสุ่มระดับไอเทมเหมือนร้านเมื่อ 1 วันก่อน
+  GHOST_SLOTS: function (day) { return Math.min(10, day + (day >= 3 ? 3 : 2)); },
+  GHOST_SKILLS: function (day) { return day >= 11 ? 3 : day >= 7 ? 2 : day >= 3 ? 1 : 0; },
+  GHOST_TAG_W: 3,      // ผีตามสาย: ไอเทมที่เข้าสายมีน้ำหนักสุ่ม ×3
+  BOSS_DAYS: { 4: 'kraken', 8: 'ghostship', 12: 'leviathan' },
 };
+
+// สายของผี (ผีแต่ละตัวมีธีมของตัวเอง ไม่สุ่มมั่ว) — ตำราประจำสายติดมาด้วย
+const ARCHETYPES = [
+  { id: 'hunter', name: 'นักล่า', tags: ['weapon'], skill: 'sharp' },
+  { id: 'arson', name: 'เผาเรือ', tags: ['fire'], skill: 'pyro' },
+  { id: 'shaman', name: 'หมอผีพิษ', tags: ['sea', 'water'], skill: 'venom' },
+  { id: 'fortress', name: 'ป้อมลอยน้ำ', tags: ['tool', 'earth'], skill: 'thickhull' },
+  { id: 'crewlord', name: 'นายเรือ', tags: ['crew', 'food'], skill: 'veteran' },
+];
+// บอส (ศัตรูพิเศษ โผล่วันที่กำหนดแทนผี) — กระดานตายตัว 2 แถว×5 ระดับไอเทมตาม tier
+const BOSSES = [
+  { id: 'kraken', name: 'คราเคน', icon: '🐙', hp: 250, tier: 0, items: ['octopus', 'jellyfish', 'jellyfish', 'trident', 'turtle', 'puffer'], skills: [{ id: 'venom', tier: 1 }, { id: 'veteran', tier: 1 }], text: 'สัตว์ทะเลยักษ์ หนวดหน่วง + พิษซ้อน' },
+  { id: 'ghostship', name: 'เรือผีสิง', icon: '👻', hp: 380, tier: 1, items: ['cannon', 'lantern', 'rum', 'musket', 'powderkeg', 'flintlock'], skills: [{ id: 'pyro', tier: 2 }, { id: 'sharp', tier: 1 }, { id: 'quickhands', tier: 1 }], text: 'ปืนใหญ่ + เผาทั้งลำ ยิงเร็วตั้งแต่เริ่ม' },
+  { id: 'leviathan', name: 'เลวีอาธาน', icon: '🐉', hp: 520, tier: 2, items: ['shark', 'crab', 'octopus', 'pearl', 'diamond'], skills: [{ id: 'berserk', tier: 2 }, { id: 'thickhull', tier: 2 }, { id: 'sharp', tier: 2 }], text: 'ราชาแห่งทะเลลึก โล่หนา คลั่งเมื่อเลือดต่ำ' },
+];
+const BOSS_BY_ID = {};
+BOSSES.forEach(function (d) { BOSS_BY_ID[d.id] = d; });
 
 const TIERS = ['ทองแดง', 'เงิน', 'ทอง', 'เพชร'];
 const SIZE_NAME = { 1: 'เล็ก', 2: 'กลาง', 3: 'ใหญ่' };
@@ -167,6 +187,9 @@ const HEROES = [
   { id: 'swordsman', name: 'Vilmort', cls: 'นักดาบ', icon: '⚔️', color: '#8a3434', hp: 250, items: ['cutlass', 'dagger'], skill: 'sharp', text: 'สายอาวุธ — อาวุธคม +5' },
   { id: 'gunner', name: 'Mazzy', cls: 'มือปืน', icon: '🔫', color: '#b05a1a', hp: 220, items: ['musket', 'lantern'], skill: 'pyro', text: 'สายไฟ — เผาแรง +1' },
   { id: 'tinker', name: 'Nanorin', cls: 'นักประดิษฐ์', icon: '🔧', color: '#2f6fc0', hp: 240, items: ['compass', 'plank', 'bucket'], skill: 'quickhands', text: 'สายเครื่องมือ — ชาร์จล่วงหน้า 1 วิ' },
+  // 10-15 เพิ่ม 2 กัปตัน (ชื่อจากลูกเรือ Oceanica)
+  { id: 'witch', name: 'Sable', cls: 'แม่มดทะเล', icon: '🔮', color: '#5a2d82', hp: 230, items: ['jellyfish', 'puffer'], skill: 'venom', text: 'สายพิษ — พิษเข้มข้น +1' },
+  { id: 'bulwark', name: 'Berion', cls: 'นายท้ายกำแพง', icon: '🛡️', color: '#2d6a4f', hp: 290, items: ['plank', 'crab'], skill: 'thickhull', text: 'สายโล่ — เริ่มรบมีโล่ 30' },
 ];
 const HERO_BY_ID = {};
 HEROES.forEach(function (d) { HERO_BY_ID[d.id] = d; });
@@ -209,4 +232,4 @@ function itemCost(def, tier) { return BAL.COST_BY_SIZE[def.size] + BAL.COST_PER_
 function skillCost(tier) { return BAL.SKILL_COST + BAL.COST_PER_TIER * tier; }
 function sellPrice(def, tier) { return Math.max(1, Math.floor(itemCost(def, tier) * BAL.SELL_RATE)); }
 
-if (typeof module !== 'undefined') module.exports = { BAL: BAL, TIERS: TIERS, SIZE_NAME: SIZE_NAME, TAG_NAME: TAG_NAME, ITEMS: ITEMS, ITEM_BY_ID: ITEM_BY_ID, SKILLS: SKILLS, SKILL_BY_ID: SKILL_BY_ID, HEROES: HEROES, HERO_BY_ID: HERO_BY_ID, ELEMENTS: ELEMENTS, EVENTS: EVENTS, countElems: countElems, elemBonuses: elemBonuses, fxVal: fxVal, fmtNum: fmtNum, itemDescr: itemDescr, skillDescr: skillDescr, itemCost: itemCost, skillCost: skillCost, sellPrice: sellPrice };
+if (typeof module !== 'undefined') module.exports = { BAL: BAL, ARCHETYPES: ARCHETYPES, BOSSES: BOSSES, BOSS_BY_ID: BOSS_BY_ID, TIERS: TIERS, SIZE_NAME: SIZE_NAME, TAG_NAME: TAG_NAME, ITEMS: ITEMS, ITEM_BY_ID: ITEM_BY_ID, SKILLS: SKILLS, SKILL_BY_ID: SKILL_BY_ID, HEROES: HEROES, HERO_BY_ID: HERO_BY_ID, ELEMENTS: ELEMENTS, EVENTS: EVENTS, countElems: countElems, elemBonuses: elemBonuses, fxVal: fxVal, fmtNum: fmtNum, itemDescr: itemDescr, skillDescr: skillDescr, itemCost: itemCost, skillCost: skillCost, sellPrice: sellPrice };

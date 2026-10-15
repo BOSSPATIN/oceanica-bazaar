@@ -281,23 +281,34 @@ var Game = (function () {
     return { name: hero.name + ' ' + hero.cls, icon: hero.icon, hp: maxHp(), items: G.board.map(function (it) { return { id: it.id, tier: it.tier, pos: it.pos }; }), skills: G.skills.slice() };
   }
   // ผี = คู่ต่อสู้ที่ระบบสร้างตามวัน (seed ตายตัวต่อวัน → รบซ้ำได้ผลเดิม)
-  function ghostSpec(day, seed) {
+  // บอสประจำวัน (BAL.BOSS_DAYS) — กระดานตายตัว ระดับตาม tier ของบอส HP ฐาน + ต่อวัน
+  function bossSpec(day) {
+    var b = BOSS_BY_ID[BAL.BOSS_DAYS[day]], pos = 0, items = [];
+    b.items.forEach(function (id) { var d = ITEM_BY_ID[id]; if (!sameRow(pos, d.size)) pos = BAL.BOARD_ROW; if (pos + d.size > BAL.BOARD_SLOTS) return; items.push({ id: id, tier: b.tier, pos: pos }); pos += d.size; });
+    return { name: b.name + ' (บอสวันที่ ' + day + ')', icon: b.icon, hp: b.hp + BAL.GHOST_HP_PER_DAY * day, items: items, skills: b.skills.map(function (s) { return { id: s.id, tier: s.tier }; }), boss: b.id, text: b.text };
+  }
+  function ghostSpec(day, seed, noBoss) {
+    if (!noBoss && BAL.BOSS_DAYS[day]) return bossSpec(day);
     var rnd = Combat.mulberry((seed + day * 31337) >>> 0);
     var hero = HEROES[Math.floor(rnd() * HEROES.length)];
+    var arch = ARCHETYPES[Math.floor(rnd() * ARCHETYPES.length)];
     var slots = BAL.GHOST_SLOTS(day), pos = 0, items = [], guard = 0, tday = day - BAL.GHOST_TIER_LAG;
+    // ไอเทมเข้าสาย = น้ำหนักสุ่ม ×GHOST_TAG_W ทำให้ของผีเสริมกันเอง (โบนัสธาตุ/ตำรา)
+    var pool = ITEMS.map(function (d) { var hit = d.tags.some(function (t) { return arch.tags.indexOf(t) >= 0; }); return { def: d, w: d.w * (hit ? BAL.GHOST_TAG_W : 1) }; });
     hero.items.forEach(function (id) { if (pos + ITEM_BY_ID[id].size <= slots && sameRow(pos, ITEM_BY_ID[id].size)) { items.push({ id: id, tier: rollTier(rnd, tday), pos: pos }); pos += ITEM_BY_ID[id].size; } });
     while (pos < slots && guard++ < 200) {
-      var def = rndPick(rnd, ITEMS, 'w');
+      var def = rndPick(rnd, pool, 'w').def;
       if (def.size > slots - pos || !sameRow(pos, def.size)) continue;
       items.push({ id: def.id, tier: rollTier(rnd, tday), pos: pos }); pos += def.size;
     }
     var skills = [{ id: hero.skill, tier: Math.min(3, Math.floor(day / 4)) }];
+    if (arch.skill !== hero.skill) skills.push({ id: arch.skill, tier: Math.min(3, Math.floor(day / 5)) });
     for (var i = 0; i < BAL.GHOST_SKILLS(day); i++) { var sk = rndPick(rnd, SKILLS, 'w'); if (!skills.some(function (s) { return s.id === sk.id; })) skills.push({ id: sk.id, tier: rollTier(rnd, tday) }); }
     var hp = hero.hp + BAL.GHOST_HP_PER_DAY * day + BAL.HP_PER_LEVEL * Math.floor(day / 3);
-    return { name: hero.name + ' ' + hero.cls + ' (ผีวันที่ ' + day + ')', icon: hero.icon, hp: hp, items: items, skills: skills };
+    return { name: hero.name + ' ' + arch.name + ' (ผีวันที่ ' + day + ')', icon: hero.icon, hp: hp, items: items, skills: skills, arch: arch.id };
   }
-  // ผีโจรสลัด (รบพิเศษ) = ผีของวันก่อนหน้า ชื่อโจรสลัด
-  function pirateSpec() { var g = ghostSpec(Math.max(1, G.day - 1), G.seed + 4242); g.name = 'กัปตันโจรสลัด ' + g.name.split(' ')[0]; g.icon = '🏴‍☠️'; return g; }
+  // ผีโจรสลัด (รบพิเศษ) = ผีของวันก่อนหน้า ชื่อโจรสลัด (ไม่เอาบอส)
+  function pirateSpec() { var g = ghostSpec(Math.max(1, G.day - 1), G.seed + 4242, true); g.name = 'กัปตันโจรสลัด ' + g.name.split(' ')[0]; g.icon = '🏴‍☠️'; return g; }
   function makeBattle() {
     if (G.bonusFight) return Combat.create(playerSpec(), pirateSpec(), (G.seed + G.day * 303) >>> 0);
     return Combat.create(playerSpec(), ghostSpec(G.day, G.seed), (G.seed + G.day * 101) >>> 0);

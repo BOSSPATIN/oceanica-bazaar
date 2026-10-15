@@ -200,7 +200,8 @@ var UI = (function () {
     s += '</div><div class="shopfoot">' + rerollBtn + '</div>';
     // ผีวันนี้ (ดูก่อนรบ)
     var gs = G.bonusFight ? Game.pirateSpec() : Game.ghostSpec(G.day, G.seed);
-    s += '<h3>' + (G.bonusFight ? '🏴‍☠️ โจรสลัดที่จะเจอ (รบพิเศษ)' : '👻 ผีที่จะเจอวันนี้') + ' <small>ดูก่อนแล้วจัดของรับมือ</small></h3>';
+    var nextBoss = null; if (!G.bonusFight && !gs.boss) { for (var bd = G.day + 1; bd <= BAL.MAX_DAY; bd++) if (BAL.BOSS_DAYS[bd]) { nextBoss = bd; break; } }
+    s += '<h3>' + (G.bonusFight ? '🏴‍☠️ โจรสลัดที่จะเจอ (รบพิเศษ)' : gs.boss ? '<span class="bad">☠️ บอสวันนี้!</span>' : '👻 ผีที่จะเจอวันนี้') + ' <small>' + (gs.boss ? h(gs.text) : 'ดูก่อนแล้วจัดของรับมือ' + (nextBoss ? ' · ☠️ บอสวันที่ ' + nextBoss + ' (' + BOSS_BY_ID[BAL.BOSS_DAYS[nextBoss]].icon + BOSS_BY_ID[BAL.BOSS_DAYS[nextBoss]].name + ')' : '')) + '</small></h3>';
     s += '<div class="ghostbox"><span class="hic">' + gs.icon + '</span><div><b>' + h(gs.name) + '</b> · HP ' + gs.hp + ' · ' + gs.skills.map(function (k) { return SKILL_BY_ID[k.id].icon + SKILL_BY_ID[k.id].name + '(' + TIERS[k.tier] + ')'; }).join(' ') + '<br>';
     s += gs.items.map(function (it) { var d = ITEM_BY_ID[it.id]; return '<span class="gi t' + it.tier + '" title="' + h(itemDescr(d, it.tier)) + '">' + d.icon + ' ' + d.name + '</span>'; }).join('');
     var ge = elemPanel(gs.items.map(function (it) { return it.id; }), true); if (ge) s += '<br><span class="warn">โบนัสธาตุ: ' + ge + '</span>';
