@@ -692,3 +692,33 @@ button { font-size: 15px; } button.tiny { font-size: 13px; } button.big { font-s
 /* ปุ่มยืนยันออกรบ (จังหวะ 2) */
 button.pri.arm { background: linear-gradient(180deg, #3fb86a, #1f7a42); animation: glow 0.8s ease-in-out infinite; }
 button.pri.arm:hover:not(:disabled) { background: linear-gradient(180deg, #5ad184, #2a944f); }
+
+/* ===== รอบ 26 (10-16): โบนัสหมวด 6 หมวด + ศัตรู 3 ประเภท ===== */
+.elem.el-weapon::after { background: repeating-linear-gradient(135deg, #c8102e 0 4px, #4a0a12 4px 8px); }
+.elem.el-tool::after { background: repeating-linear-gradient(90deg, #b08a3a 0 3px, #4a3a16 3px 6px); }
+.elem.el-food::after { background: repeating-radial-gradient(circle at 50% 50%, #e07a3a 0 3px, #6a2a10 3px 6px); }
+.elem.el-sea::after { background: repeating-linear-gradient(180deg, #2fb4a8 0 5px, #0b3d4a 5px 10px); }
+.elem.el-treasure::after { background: linear-gradient(180deg, #f6d77a, #e9b949 50%, #8a5f24); }
+.elem.el-crew::after { background: repeating-linear-gradient(45deg, #d8c7a0 0 4px, #5a4a30 4px 8px); }
+.cath { margin-top: 6px; }
+.ghostbox .trait { color: var(--gold2); font-size: 12.5px; }
+/* การ์ดโบนัสย่อ: 0 ชิ้นซ่อนรายละเอียด (คลิกกาง) · 1-2 ชิ้นโชว์แค่เป้า 3 · 5 ชิ้นโชว์แค่เป้า 5 — 11 กลุ่มไม่ล้นจอ */
+.elem { cursor: pointer; }
+.elem.n0 .tl { display: none; } .elem.n0.open .tl { display: block; }
+.elem.n1 .tl.t5 { display: none; } .elem.n1.open .tl.t5 { display: block; }
+.elem.n5 .tl.t3 { display: none; } .elem.n5.open .tl.t3 { display: block; }
+.elem.n0 { min-height: 0; opacity: .85; }
+@media (min-width: 1300px) and (min-height: 521px) {
+  .colE .elem { padding: 5px 10px 5px 28px; } .colE .elem b { font-size: 15px; } .colE .elem .cnt { font-size: 14px; top: 5px; }
+  .colE .elem .tl { font-size: 12px; line-height: 1.25; margin-top: 2px; }
+  .colE .elems { gap: 5px; } .colE h3 { margin-top: 6px; }
+}
+@media (min-width: 1300px) and (min-height: 521px) and (max-height: 860px) {
+  .colE .elem { padding: 3px 8px 3px 22px; } .colE .elem b { font-size: 13px; } .colE .elem .cnt { font-size: 12px; top: 3px; } .colE .elem .tl { font-size: 10.5px; }
+  .colE .elems { gap: 3px; } .cath { margin-top: 2px; font-size: 12px; }
+}
+/* มือถือแนวนอน: ชิปบรรทัดเดียว 2 แถว (ธาตุ / หมวด) ซ่อนหัวข้อหมวด */
+@media (orientation: landscape) and (max-height: 520px) {
+  .cath { display: none; }
+  .elems.cats { margin-top: 1px; }
+}

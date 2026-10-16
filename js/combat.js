@@ -14,9 +14,10 @@ var Combat = (function () {
   // spec: { name, icon, hp, items:[{id,tier,pos}], skills:[{id,tier}] }
   function makeSide(spec, key) {
     var s = {
-      key: key, name: spec.name, icon: spec.icon, maxhp: spec.hp, hp: spec.hp,
+      key: key, name: spec.name, icon: spec.icon, kind: spec.kind || '', maxhp: spec.hp, hp: spec.hp,
       shield: 0, burn: 0, poison: 0, regen: 0, burnT: 0, poisT: 0, regT: 0,
       dealt: 0, taken: 0, berserked: false, items: [], skills: [],
+      spmods: spec.mods || {},   // ความสามารถติดตัวศัตรู/บอส (คีย์เดียวกับโบนัสธาตุ)
     };
     (spec.items || []).slice().sort(function (a, b) { return a.pos - b.pos; }).forEach(function (it) {
       var def = ITEM_BY_ID[it.id];
@@ -46,26 +47,35 @@ var Combat = (function () {
     // โบนัสธาตุจากชิ้นบนกระดาน
     side.elems = elemBonuses(side.items.map(function (it) { return it.def.id; }));
     var em = {}; side.elems.forEach(function (b) { Object.keys(b.mods).forEach(function (k) { em[k] = (em[k] || 0) + b.mods[k]; }); });
+    Object.keys(side.spmods).forEach(function (k) { em[k] = (em[k] || 0) + side.spmods[k]; });   // ความสามารถติดตัวศัตรู
     side.emods = em;
     side.maxhp += itemPassive(side, 'maxhp') + skillVal(side, 'maxhp') + (em.maxhp || 0);
     side.hp = side.maxhp;
     side.shield = itemPassive(side, 'startShield') + skillVal(side, 'startShield') + (em.startShield || 0);
     side.regen = itemPassive(side, 'startRegen') + (em.startRegen || 0);
-    var charge = (itemPassive(side, 'startCharge') + skillVal(side, 'startCharge')) * 1000;
+    var charge = (itemPassive(side, 'startCharge') + skillVal(side, 'startCharge') + (em.startCharge || 0)) * 1000;
     var haste = itemPassive(side, 'startHaste') * 1000;
-    side.items.forEach(function (it) { if (it.cd > 0) { it.timer = Math.min(it.cd - 1, charge); it.haste = haste; } });
+    side.items.forEach(function (it) {
+      if (it.cd <= 0) return;
+      var isW = it.def.tags.indexOf('weapon') >= 0, isC = it.def.tags.indexOf('crew') >= 0, isT = it.def.tags.indexOf('tool') >= 0;
+      if (isT && em.toolCd) it.cd = Math.max(500, Math.round(it.def.cd * (1 - em.toolCd / 100)));   // หมวดเครื่องมือ 5: คูลดาวน์สั้นลง
+      it.timer = Math.min(it.cd - 1, charge);
+      it.haste = haste + (isW ? (em.weaponStartHaste || 0) : 0) * 1000 + (isC ? (em.crewStartHaste || 0) : 0) * 1000;
+    });
     side.mods = {
       weaponDmg: skillVal(side, 'weaponDmg') + itemPassive(side, 'auraWeaponDmg') + (em.weaponDmg || 0),
+      crewDmg: em.crewDmg || 0,
       crit: itemPassive(side, 'auraCrit') + (em.crit || 0),
-      burn: skillVal(side, 'burnBonus') + (em.burn || 0), poison: skillVal(side, 'poisonBonus'),
+      burn: skillVal(side, 'burnBonus') + (em.burn || 0), poison: skillVal(side, 'poisonBonus') + (em.poison || 0),
       heal: skillVal(side, 'healBonus') + (em.heal || 0), shield: skillVal(side, 'shieldBonus') + (em.shield || 0),
       slow: em.slow || 0,
       berserk: skillVal(side, 'berserk'),
     };
   }
   function applyStartFoe(B, me, foe) {
-    if (me.emods.startBurnFoe) { foe.burn += me.emods.startBurnFoe; log(B, me, '<span class="burn">🔥 โบนัสธาตุไฟ: ศัตรูติดเผา ' + me.emods.startBurnFoe + '</span>'); }
-    if (me.emods.startSlowFoe) { foe.items.forEach(function (x) { if (isActive(x)) x.slow += me.emods.startSlowFoe * 1000; }); log(B, me, '<span class="avo">💧 โบนัสธาตุน้ำ: หน่วงศัตรูทุกชิ้น ' + me.emods.startSlowFoe + ' วิ</span>'); }
+    if (me.emods.startBurnFoe) { foe.burn += me.emods.startBurnFoe; log(B, me, '<span class="burn">🔥 เริ่มรบ: ศัตรูติดเผา ' + me.emods.startBurnFoe + '</span>'); }
+    if (me.emods.startSlowFoe) { foe.items.forEach(function (x) { if (isActive(x)) x.slow += me.emods.startSlowFoe * 1000; }); log(B, me, '<span class="avo">💧 เริ่มรบ: หน่วงศัตรูทุกชิ้น ' + me.emods.startSlowFoe + ' วิ</span>'); }
+    if (me.emods.startPoisonFoe) { foe.poison += me.emods.startPoisonFoe; log(B, me, '<span class="poi">☠ โบนัสหมวดสัตว์ทะเล: ศัตรูติดพิษ ' + me.emods.startPoisonFoe + '</span>'); }
   }
 
   function create(specA, specB, seed) {
@@ -73,6 +83,7 @@ var Combat = (function () {
     B.a = makeSide(specA, 'a'); B.b = makeSide(specB, 'b');
     prepare(B.a); prepare(B.b);
     [B.a, B.b].forEach(function (s) { if (s.elems.length) log(B, s, s.elems.map(function (b) { return b.el.icon + ' ' + b.el.name + ' ' + b.n + ' ชิ้น: ' + b.text; }).join(' · ')); });
+    [[B.a, specA], [B.b, specB]].forEach(function (p) { if (p[1].text && Object.keys(p[0].spmods).length) log(B, p[0], '<span class="sk">' + p[0].icon + ' ความสามารถติดตัว: ' + p[1].text + '</span>'); });
     applyStartFoe(B, B.a, B.b); applyStartFoe(B, B.b, B.a);
     return B;
   }
@@ -120,8 +131,8 @@ var Combat = (function () {
       var v = fxVal(f, it.tier);
       switch (f.k) {
         case 'dmg': {
-          var isW = d.tags.indexOf('weapon') >= 0;
-          v += it.bonus + (isW ? m.weaponDmg : 0);
+          var isW = d.tags.indexOf('weapon') >= 0, isC = d.tags.indexOf('crew') >= 0;
+          v += it.bonus + (isW ? m.weaponDmg : 0) + (isC ? m.crewDmg : 0);
           var critC = (f.crit || 0) + (isW ? m.crit : 0);
           var n = f.n || 1, total = 0, crit = false;
           for (var i = 0; i < n; i++) {

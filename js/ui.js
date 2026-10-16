@@ -95,20 +95,22 @@ var UI = (function () {
   function elemPanel(itemIds, compact) {
     var c = countElems(itemIds), bon = {};
     elemBonuses(itemIds).forEach(function (b) { bon[b.el.id] = b; });
-    if (compact) return ELEMENTS.filter(function (e) { return bon[e.id]; }).map(function (e) { return e.icon + ' ' + e.name + ' ' + bon[e.id].n + ': ' + bon[e.id].text; }).join(' · ');
-    var s = '<div class="elems">';
-    ELEMENTS.forEach(function (e) {
+    if (compact) return SYNERGIES.filter(function (e) { return bon[e.id]; }).map(function (e) { return e.icon + ' ' + e.name + ' ' + bon[e.id].n + ': ' + bon[e.id].text; }).join(' · ');
+    function card(e) {
       var b = bon[e.id], n = c[e.id];
-      s += '<div class="elem el-' + e.id + (b ? (b.tier === 1 ? ' on2' : ' on') : '') + '" title="ครบ 3 ชิ้น: ' + h(e.tiers[0].text) + ' / ครบ 5 ชิ้น: ' + h(e.tiers[1].text) + '"><b>' + e.icon + ' ' + e.name + '</b><span class="cnt">' + n + ' ชิ้น</span>';
-      s += '<div class="tl' + (n >= 3 ? ' done' : '') + '">' + (n >= 3 ? '✅' : '▫️') + ' 3 ชิ้น: ' + e.tiers[0].text + '</div><div class="tl' + (n >= 5 ? ' done' : '') + '">' + (n >= 5 ? '✅' : '▫️') + ' 5 ชิ้น: ' + e.tiers[1].text + '</div></div>';
-    });
-    return s + '</div>';
+      // การ์ดย่อ: 0 ชิ้น = ชื่อ+จำนวนอย่างเดียว (จิ้ม/คลิกเพื่อกางดู) · 1-2 ชิ้น = โชว์เป้า 3 ชิ้น · 3-4 = โชว์ทั้งคู่ · 5 = โชว์เป้า 5 (ครบ 11 กลุ่มแล้วไม่ล้นจอ)
+      var nc = n >= 5 ? ' n5' : n >= 3 ? ' n3' : n >= 1 ? ' n1' : ' n0';
+      return '<div class="elem el-' + e.id + nc + (b ? (b.tier === 1 ? ' on2' : ' on') : '') + '" data-act="syn" title="ครบ 3 ชิ้น: ' + h(e.tiers[0].text) + ' / ครบ 5 ชิ้น: ' + h(e.tiers[1].text) + '"><b>' + e.icon + ' ' + e.name + '</b><span class="cnt">' + n + ' ชิ้น</span>' +
+        '<div class="tl t3' + (n >= 3 ? ' done' : '') + '">' + (n >= 3 ? '✅' : '▫️') + ' 3 ชิ้น: ' + e.tiers[0].text + '</div><div class="tl t5' + (n >= 5 ? ' done' : '') + '">' + (n >= 5 ? '✅' : '▫️') + ' 5 ชิ้น: ' + e.tiers[1].text + '</div></div>';
+    }
+    // แผงซ้าย: ธาตุ 5 + หมวด 6 (10-16) — ไอเทม 1 ชิ้นนับทั้งธาตุและหมวดของมัน
+    return '<div class="elems els">' + ELEMENTS.map(card).join('') + '</div><h3 class="cath">โบนัสหมวด <small>ครบ 3 / 5 ชิ้น นับพร้อมธาตุ</small></h3><div class="elems cats">' + CATEGORIES.map(card).join('') + '</div>';
   }
 
   // ---------- หน้าแรก ----------
   function renderTitle() {
     var s = '<div class="title">' + HERO_SVG + '<div class="big">BAZAAR</div><div class="tag">ตลาดโจรสลัด · 海賊市場 · AUTO-BATTLER</div>';
-    s += '<div class="lore">ซื้อของจากตลาดท่าเรือ จัดลงกระดาน 10 ช่อง แล้วปล่อยให้ของทุกชิ้นทำงานเองตามเวลา<br>ชนะผีคู่ต่อสู้ให้ครบ <b>' + BAL.WIN_TARGET + ' ครั้ง</b> ก่อนเรือจม (แพ้ได้ ' + BAL.LIVES + ' ครั้ง) · ไม่มี Stamina ไม่จำกัดรายวัน</div>';
+    s += '<div class="lore">ซื้อของจากตลาดท่าเรือ จัดลงกระดาน 10 ช่อง แล้วปล่อยให้ของทุกชิ้นทำงานเองตามเวลา<br>ปราบศัตรู (สัตว์ประหลาด · ผี · โจรสลัด · บอส) ให้ครบ <b>' + BAL.WIN_TARGET + ' ครั้ง</b> ก่อนเรือจม (แพ้ได้ ' + BAL.LIVES + ' ครั้ง) · ไม่มี Stamina ไม่จำกัดรายวัน</div>';
     s += '<h2>เลือกกัปตัน</h2><div class="heroes">';
     HEROES.forEach(function (hr) {
       s += '<div class="hero" data-hero="' + hr.id + '"><div class="portrait" style="background:' + hr.color + '"><span>' + hr.icon + '</span><small>' + hr.cls + '</small></div>';
@@ -119,7 +121,7 @@ var UI = (function () {
     s += '</div>';
     var st = Game.loadStats();
     if (st.runs) s += '<div class="stats slot"><b>สถิติ:</b> เล่น ' + st.runs + ' รัน · ชนะครบ 10 ได้ ' + st.victories + ' รัน · ชนะสูงสุดในรันเดียว ' + st.bestWins + ' · ' + HEROES.map(function (hr) { var x = st.heroes[hr.id]; return x ? hr.icon + ' ' + hr.name + ' ' + x.victories + '/' + x.runs : ''; }).filter(Boolean).join(' · ') + '</div>';
-    s += '<div class="lore dim">โบนัสธาตุ: ของบนกระดานมีธาตุ ไฟ/น้ำ/ดิน/โลหะ/ไม้ — ธาตุเดียวกันครบ 3 หรือ 5 ชิ้นได้โบนัสพิเศษ · ระหว่างทางมีเหตุการณ์ให้เลือก (เกาะร้าง ซากเรือ พ่อค้า โจรสลัด...)</div>';
+    s += '<div class="lore dim">โบนัส: ของแต่ละชิ้นมีธาตุ (ไฟ/น้ำ/ดิน/โลหะ/ไม้) และหมวด (อาวุธ/เครื่องมือ/อาหาร/สัตว์ทะเล/สมบัติ/ลูกเรือ) — อย่างเดียวกันครบ 3 หรือ 5 ชิ้นบนกระดานได้โบนัสพิเศษ · ระหว่างทางมีเหตุการณ์ให้เลือก (เกาะร้าง ซากเรือ พ่อค้า โจรสลัด...)</div>';
     s += '</div>';
     $c.innerHTML = s;
   }
@@ -202,10 +204,11 @@ var UI = (function () {
     // ผีวันนี้ (ดูก่อนรบ)
     var gs = G.bonusFight ? Game.pirateSpec() : Game.ghostSpec(G.day, G.seed);
     var nextBoss = null; if (!G.bonusFight && !gs.boss) { for (var bd = G.day + 1; bd <= BAL.MAX_DAY; bd++) if (BAL.BOSS_DAYS[bd]) { nextBoss = bd; break; } }
-    s += '<h3>' + (G.bonusFight ? '🏴‍☠️ โจรสลัดที่จะเจอ (รบพิเศษ)' : gs.boss ? '<span class="bad">☠️ บอสวันนี้!</span>' : '👻 ผีที่จะเจอวันนี้') + ' <small>' + (gs.boss ? h(gs.text) : 'ดูก่อนแล้วจัดของรับมือ' + (nextBoss ? ' · ☠️ บอสวันที่ ' + nextBoss + ' (' + BOSS_BY_ID[BAL.BOSS_DAYS[nextBoss]].icon + BOSS_BY_ID[BAL.BOSS_DAYS[nextBoss]].name + ')' : '')) + '</small></h3>';
-    s += '<div class="ghostbox"><span class="hic">' + gs.icon + '</span><div><b>' + h(gs.name) + '</b> · HP ' + gs.hp + ' · ' + gs.skills.map(function (k) { return SKILL_BY_ID[k.id].icon + SKILL_BY_ID[k.id].name + '(' + TIERS[k.tier] + ')'; }).join(' ') + '<br>';
+    var nb = nextBoss ? Game.bossFor(nextBoss) : null, kd = ENEMY_KIND[gs.kind] || ENEMY_KIND.undead;
+    s += '<h3>' + (G.bonusFight ? '🏴‍☠️ โจรสลัดที่จะเจอ (รบพิเศษ)' : gs.boss ? '<span class="bad">☠️ บอสวันนี้!</span>' : kd.icon + ' ศัตรูวันนี้: ' + kd.name) + ' <small>' + (gs.boss ? h(gs.text) : 'ดูก่อนแล้วจัดของรับมือ' + (nb ? ' · ☠️ บอสวันที่ ' + nextBoss + ' (' + nb.icon + nb.name + ')' : '')) + '</small></h3>';
+    s += '<div class="ghostbox"><span class="hic">' + gs.icon + '</span><div><b>' + h(gs.name) + '</b> · HP ' + gs.hp + ' · ' + gs.skills.map(function (k) { return SKILL_BY_ID[k.id].icon + SKILL_BY_ID[k.id].name + '(' + TIERS[k.tier] + ')'; }).join(' ') + (gs.text && !gs.boss ? '<br><span class="trait">✦ ' + h(gs.text) + (Object.keys(gs.mods || {}).length ? '' : ' <small class="dim">(ความสามารถติดตัวเริ่มมีผลวันที่ 2)</small>') + '</span>' : '') + '<br>';
     s += gs.items.map(function (it) { var d = ITEM_BY_ID[it.id]; return '<span class="gi t' + it.tier + '" title="' + h(itemDescr(d, it.tier)) + '">' + d.icon + ' ' + d.name + '</span>'; }).join('');
-    var ge = elemPanel(gs.items.map(function (it) { return it.id; }), true); if (ge) s += '<br><span class="warn">โบนัสธาตุ: ' + ge + '</span>';
+    var ge = elemPanel(gs.items.map(function (it) { return it.id; }), true); if (ge) s += '<br><span class="warn">โบนัส: ' + ge + '</span>';
     s += '</div></div>';
     var fbtn = fightArm ? '<button class="big pri arm" data-act="fight">✅ ยืนยันออกรบ? กด Space อีกครั้ง</button> <button class="big" data-act="unarm">ยกเลิก (Esc)</button>' : null;
     if (G.bonusFight) s += '<div class="row c fightrow">' + (fbtn || '<button class="big pri" data-act="fight">🏴‍☠️ สู้โจรสลัด (Space)</button>') + '<div class="dim">ชนะได้ทอง +' + G.bonusFight.reward + ' · แพ้ไม่เสียเรือ · ไม่นับเป็นวัน</div></div>';
@@ -346,7 +349,7 @@ var UI = (function () {
     var s = '<div class="banner ' + r + '">' + (r === 'win' ? '🏆 ชนะ!' : r === 'lose' ? '💀 แพ้' : '🤝 เสมอ') + '</div>';
     s += '<div class="sum ' + r + '"><div class="big">' + head + '</div>';
     s += '<div class="dmgsum"><div class="dcol"><div class="dh">🟢 ฝ่ายเรา <small>ดาเมจรวม ' + Math.round(B.a.dealt) + '</small></div><div class="drow">โจมตี: ' + topItems(B.a, 'dealt') + '</div><div class="drow">ฮีล: ' + topItems(B.a, 'healed') + '</div><div class="drow">โล่: ' + topItems(B.a, 'shielded') + '</div></div>';
-    s += '<div class="dcol"><div class="dh">🔴 ผี <small>ดาเมจรวม ' + Math.round(B.b.dealt) + '</small></div><div class="drow">โจมตี: ' + topItems(B.b, 'dealt') + '</div><div class="drow">ฮีล: ' + topItems(B.b, 'healed') + '</div><div class="drow">โล่: ' + topItems(B.b, 'shielded') + '</div></div></div>';
+    s += '<div class="dcol"><div class="dh">🔴 ศัตรู <small>ดาเมจรวม ' + Math.round(B.b.dealt) + '</small></div><div class="drow">โจมตี: ' + topItems(B.b, 'dealt') + '</div><div class="drow">ฮีล: ' + topItems(B.b, 'healed') + '</div><div class="drow">โล่: ' + topItems(B.b, 'shielded') + '</div></div></div>';
     s += '<div class="row c"><button class="big pri" data-act="next">' + (G.bonusFight ? '⛵ กลับเข้าตลาด (Space)' : r === 'win' && G.wins + 1 >= BAL.WIN_TARGET ? '🎉 จบรัน' : r === 'lose' && G.lives - 1 <= 0 ? 'เรือจม...' : '📅 วันถัดไป (Space)') + '</button></div></div>';
     el.innerHTML = s;
     el.scrollIntoView({ behavior: 'smooth' });
@@ -412,6 +415,7 @@ var UI = (function () {
   function onClick(ev) {
     var t = ev.target.closest('[data-act],[data-uid],[data-pos]'); if (!t) return;
     var act = t.getAttribute('data-act') || (t.hasAttribute('data-pos') ? 'slot' : null), G = Game.get(), r;
+    if (act === 'syn') { t.classList.toggle('open'); return; }   // กาง/หุบรายละเอียดโบนัส (ไม่ render ใหม่)
     if (t.hasAttribute('data-uid') && !act) { var u = +t.getAttribute('data-uid'); sel = sel === u ? null : u; setFlash(sel !== null ? 'จิ้มช่องว่างบนกระดานเพื่อวาง หรือใช้ปุ่มด้านล่าง' : null, 'good'); return render(); }
     if (act === 'slot') { if (sel !== null) { var pr = Game.placeAt(sel, +t.getAttribute('data-pos')); setFlash(pr.ok ? (pr.msg || null) : pr.why, pr.ok ? 'good' : 'bad'); if (pr.ok) sel = null; render(); } return; }
     if (fightArm && act !== 'fight') disarm(false);

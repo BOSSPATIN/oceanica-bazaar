@@ -31,7 +31,7 @@ const BAL = {
   GHOST_SLOTS: function (day) { return Math.min(10, day + (day >= 3 ? 3 : 2)); },
   GHOST_SKILLS: function (day) { return day >= 11 ? 3 : day >= 7 ? 2 : day >= 3 ? 1 : 0; },
   GHOST_TAG_W: 3,      // ผีตามสาย: ไอเทมที่เข้าสายมีน้ำหนักสุ่ม ×3
-  BOSS_DAYS: { 4: 'kraken', 8: 'ghostship', 12: 'leviathan' },
+  BOSS_DAYS: { 4: ['kraken', 'crabking'], 8: ['ghostship', 'davyjones'], 12: ['leviathan', 'dutchman'] },  // 10-16 บอสสำรองต่อวัน สุ่มตาม seed ของรัน
 };
 
 // สายของผี (ผีแต่ละตัวมีธีมของตัวเอง ไม่สุ่มมั่ว) — ตำราประจำสายติดมาด้วย
@@ -42,11 +42,46 @@ const ARCHETYPES = [
   { id: 'fortress', name: 'ป้อมลอยน้ำ', tags: ['tool', 'earth'], skill: 'thickhull' },
   { id: 'crewlord', name: 'นายเรือ', tags: ['crew', 'food'], skill: 'veteran' },
 ];
+const ARCH_BY_ID = {};
+ARCHETYPES.forEach(function (d) { ARCH_BY_ID[d.id] = d; });
+
+// ศัตรูรายวัน (10-16 บอสสั่ง "สัตว์ประหลาดทำไมมีแค่ผี") — 3 ประเภท: สัตว์ประหลาด / ผี / โจรสลัด
+// แต่ละตัวมี "สาย" (arch) + ของประจำตัว 2 ชิ้น + ตำราประจำตัว + ความสามารถติดตัว (mods ใช้คีย์เดียวกับโบนัสธาตุ)
+// โจรสลัด: เอาจากตำนาน/ประวัติศาสตร์จริงที่คนทั่วไปรู้จัก (หนวดดำ, แอนน์ บอนนี่, กัปตันคิดด์, แบล็กบาร์ต, ทองต้องคำสาป)
+//   + กัปตันที่คิดเองให้ "โทน" คล้ายหนัง/การ์ตูนโจรสลัดดัง แต่ไม่ใช้ชื่อ/ตัวละครจริง (ลิขสิทธิ์ — เกมอยู่บนเว็บสาธารณะ)
+const ENEMY_KIND = { monster: { icon: '🐙', name: 'สัตว์ประหลาด' }, undead: { icon: '👻', name: 'ผี' }, pirate: { icon: '🏴‍☠️', name: 'โจรสลัด' }, boss: { icon: '☠️', name: 'บอส' } };
+const ENEMIES = [
+  // ---- สัตว์ประหลาด ----
+  { id: 'siren', kind: 'monster', name: 'นางเงือกเสียงมรณะ', icon: '🧜‍♀️', arch: 'shaman', items: ['jellyfish', 'prism'], skill: 'medic', hp: 230, w: 6, mods: { startSlowFoe: 2 }, text: 'เสียงเพลงทำให้ลูกเรือเชื่องช้า — เริ่มรบหน่วงศัตรูทุกชิ้น 2 วิ' },
+  { id: 'seaserpent', kind: 'monster', name: 'งูทะเลยักษ์', icon: '🐍', arch: 'shaman', items: ['puffer', 'harpoon'], skill: 'veteran', hp: 260, w: 6, mods: { poison: 1 }, text: 'เขี้ยวอาบพิษ — พิษเพิ่ม +1 ทุกครั้ง' },
+  { id: 'coralgolem', kind: 'monster', name: 'โกเลมปะการัง', icon: '🪨', arch: 'fortress', items: ['plank', 'turtle'], skill: 'shieldwall', hp: 300, w: 5, mods: { shield: 5 }, text: 'ร่างปะการังแข็งเป็นหิน — โล่เพิ่ม +5 ทุกครั้ง' },
+  { id: 'megashark', kind: 'monster', name: 'ฉลามขาวยักษ์', icon: '🦈', arch: 'hunter', items: ['dagger', 'lobster'], skill: 'berserk', hp: 250, w: 6, mods: { crit: 10 }, text: 'ขย้ำไม่ยั้ง — คริ +10%' },
+  { id: 'magmaeel', kind: 'monster', name: 'ปลาไหลลาวา', icon: '🌋', arch: 'arson', items: ['lantern', 'lobster'], skill: 'quickhands', hp: 240, w: 5, mods: { burn: 1 }, text: 'ตัวร้อนดั่งลาวา — เผาเพิ่ม +1 ทุกครั้ง' },
+  { id: 'stormbird', kind: 'monster', name: 'นกพายุสายฟ้า', icon: '⚡', arch: 'hunter', items: ['parrot', 'flintlock'], skill: 'quickhands', hp: 230, w: 5, mods: { startCharge: 1 }, text: 'โฉบไวดั่งสายฟ้า — ทุกชิ้นชาร์จล่วงหน้า 1 วิ' },
+  // ---- ผี / วิญญาณ ----
+  { id: 'ghostcrew', kind: 'undead', name: 'ผีกะลาสีเรือจม', icon: '👻', arch: 'crewlord', items: ['sailor', 'rum'], skill: 'medic', hp: 240, w: 6, mods: {}, text: 'วิญญาณลูกเรือที่จมไปพร้อมเรือ ยังคงทำหน้าที่ทุกคืน' },
+  { id: 'skeleton', kind: 'undead', name: 'โครงกระดูกต้องคำสาป', icon: '💀', arch: 'hunter', items: ['cutlass', 'plank'], skill: 'thickhull', hp: 260, w: 6, mods: { startShield: 30 }, text: 'กระดูกแข็งดั่งเหล็ก — เริ่มรบมีโล่ 30' },
+  { id: 'drowned', kind: 'undead', name: 'ศพจมน้ำคืนชีพ', icon: '🧟', arch: 'shaman', items: ['jellyfish', 'bucket'], skill: 'veteran', hp: 280, w: 5, mods: { startRegen: 1 }, text: 'ตายแล้วฟื้น — ฟื้นฟู 1/วิ ตลอดรบ' },
+  { id: 'wraith', kind: 'undead', name: 'วิญญาณตะเกียง', icon: '🕯️', arch: 'arson', items: ['lantern', 'compass'], skill: 'lucky', hp: 220, w: 5, mods: { startBurnFoe: 3 }, text: 'ไฟวิญญาณสีเขียว — เริ่มรบศัตรูติดเผา 3' },
+  // ---- โจรสลัด ----
+  { id: 'blackbeard', kind: 'pirate', name: 'กัปตันหนวดดำ', icon: '🧔🏿', arch: 'arson', items: ['flintlock', 'lantern'], skill: 'berserk', hp: 270, w: 6, mods: { burn: 1 }, text: 'จุดชนวนไว้ในหนวดก่อนบุก (ตำนานหนวดดำ) — เผาเพิ่ม +1' },
+  { id: 'rumfox', kind: 'pirate', name: 'กัปตันรัมฟ็อกซ์ จอมเจ้าเล่ห์', icon: '🍾', arch: 'crewlord', items: ['rum', 'dagger'], skill: 'lucky', hp: 240, w: 6, mods: { startCharge: 1 }, text: 'เมาตลอดแต่ไม่เคยถูกจับได้ — ทุกชิ้นชาร์จล่วงหน้า 1 วิ' },
+  { id: 'annebonny', kind: 'pirate', name: 'แอนน์ บอนนี่ ดาบคู่ปืน', icon: '🗡️', arch: 'hunter', items: ['cutlass', 'flintlock'], skill: 'sharp', hp: 250, w: 6, mods: { weaponDmg: 5 }, text: 'โจรสลัดหญิงในตำนานแคริบเบียน — อาวุธโจมตี +5' },
+  { id: 'captainkidd', kind: 'pirate', name: 'กัปตันคิดด์ นักฝังสมบัติ', icon: '🗺️', arch: 'fortress', items: ['map', 'chest'], skill: 'thickhull', hp: 280, w: 5, mods: { startShield: 40 }, text: 'ฝังสมบัติไว้ทั่วทะเล ไม่มีใครหาเจอ — เริ่มรบมีโล่ 40' },
+  { id: 'redscarf', kind: 'pirate', name: 'กัปตันหนุ่มผ้าพันคอแดง', icon: '🧣', arch: 'crewlord', items: ['sailor', 'cook'], skill: 'veteran', hp: 260, w: 6, mods: { crewDmg: 5 }, text: 'ลูกเรือคือครอบครัว ฝันจะเป็นราชาแห่งทะเล — ลูกเรือโจมตี +5' },
+  { id: 'cursedgold', kind: 'pirate', name: 'ลูกเรือทองต้องคำสาป', icon: '🌕', arch: 'fortress', items: ['pearl', 'axe'], skill: 'shieldwall', hp: 290, w: 5, mods: { startRegen: 2 }, text: 'ขโมยทองต้องคำสาป ใต้แสงจันทร์กลายเป็นโครงกระดูก ตายไม่ได้ — ฟื้นฟู 2/วิ' },
+  { id: 'blackbart', kind: 'pirate', name: 'แบล็กบาร์ต ราชาปล้นเรือ', icon: '🎩', arch: 'hunter', items: ['musket', 'spyglass'], skill: 'sharp', hp: 250, w: 5, mods: { crit: 10 }, text: 'ปล้นเรือมากที่สุดในประวัติศาสตร์ (400+ ลำ) — คริ +10%' },
+];
+const ENEMY_BY_ID = {};
+ENEMIES.forEach(function (d) { ENEMY_BY_ID[d.id] = d; });
 // บอส (ศัตรูพิเศษ โผล่วันที่กำหนดแทนผี) — กระดานตายตัว 2 แถว×5 ระดับไอเทมตาม tier
 const BOSSES = [
-  { id: 'kraken', name: 'คราเคน', icon: '🐙', hp: 250, tier: 0, items: ['octopus', 'jellyfish', 'jellyfish', 'trident', 'turtle', 'puffer'], skills: [{ id: 'venom', tier: 1 }, { id: 'veteran', tier: 1 }], text: 'สัตว์ทะเลยักษ์ หนวดหน่วง + พิษซ้อน' },
-  { id: 'ghostship', name: 'เรือผีสิง', icon: '👻', hp: 380, tier: 1, items: ['cannon', 'lantern', 'rum', 'musket', 'powderkeg', 'flintlock'], skills: [{ id: 'pyro', tier: 2 }, { id: 'sharp', tier: 1 }, { id: 'quickhands', tier: 1 }], text: 'ปืนใหญ่ + เผาทั้งลำ ยิงเร็วตั้งแต่เริ่ม' },
-  { id: 'leviathan', name: 'เลวีอาธาน', icon: '🐉', hp: 520, tier: 2, items: ['shark', 'crab', 'octopus', 'pearl', 'diamond'], skills: [{ id: 'berserk', tier: 2 }, { id: 'thickhull', tier: 2 }, { id: 'sharp', tier: 2 }], text: 'ราชาแห่งทะเลลึก โล่หนา คลั่งเมื่อเลือดต่ำ' },
+  { id: 'kraken', name: 'คราเคน', icon: '🐙', hp: 250, tier: 0, items: ['octopus', 'jellyfish', 'jellyfish', 'trident', 'turtle', 'puffer'], skills: [{ id: 'venom', tier: 1 }, { id: 'veteran', tier: 1 }], mods: {}, text: 'สัตว์ทะเลยักษ์ หนวดหน่วง + พิษซ้อน' },
+  { id: 'crabking', name: 'ราชาปูเกราะเหล็ก', icon: '🦀', hp: 260, tier: 0, items: ['crab', 'crab', 'lobster', 'turtle', 'anchor'], skills: [{ id: 'thickhull', tier: 1 }, { id: 'shieldwall', tier: 1 }], mods: { shield: 5 }, text: 'โล่ซ้อนโล่ เกราะปูเจาะยาก — ต้องใส่ดาเมจให้ทะลุ' },
+  { id: 'ghostship', name: 'เรือผีสิง', icon: '👻', hp: 380, tier: 1, items: ['cannon', 'lantern', 'rum', 'musket', 'powderkeg', 'flintlock'], skills: [{ id: 'pyro', tier: 2 }, { id: 'sharp', tier: 1 }, { id: 'quickhands', tier: 1 }], mods: {}, text: 'ปืนใหญ่ + เผาทั้งลำ ยิงเร็วตั้งแต่เริ่ม' },
+  { id: 'davyjones', name: 'เดวี่ โจนส์ กัปตันหนวดหมึก', icon: '🦑', hp: 400, tier: 1, items: ['octopus', 'chain', 'jellyfish', 'harpoon', 'hourglass', 'navigator'], skills: [{ id: 'venom', tier: 2 }, { id: 'quickhands', tier: 1 }], mods: { startSlowFoe: 2 }, text: 'กัปตันต้องคำสาปแห่งก้นทะเล (ตำนานกะลาสี) หน่วงทุกชิ้น + พิษ' },
+  { id: 'leviathan', name: 'เลวีอาธาน', icon: '🐉', hp: 520, tier: 2, items: ['shark', 'crab', 'octopus', 'pearl', 'diamond'], skills: [{ id: 'berserk', tier: 2 }, { id: 'thickhull', tier: 2 }, { id: 'sharp', tier: 2 }], mods: {}, text: 'ราชาแห่งทะเลลึก โล่หนา คลั่งเมื่อเลือดต่ำ' },
+  { id: 'dutchman', name: 'เรือฮอลันดาบิน', icon: '⛵', hp: 540, tier: 2, items: ['cannon', 'musket', 'sail', 'gunner'], skills: [{ id: 'pyro', tier: 2 }, { id: 'sharp', tier: 2 }, { id: 'berserk', tier: 1 }], mods: { startBurnFoe: 6 }, text: 'เรือผีในตำนาน ปืนใหญ่เผาทั้งลำ ไม่มีวันจม — เริ่มรบติดเผา 6' },
 ];
 const BOSS_BY_ID = {};
 BOSSES.forEach(function (d) { BOSS_BY_ID[d.id] = d; });
@@ -148,15 +183,38 @@ const ELEMENTS = [
     { n: 3, mods: { startRegen: 2 }, text: 'ฟื้นฟู 2/วิ ตลอดรบ' },
     { n: 5, mods: { startRegen: 5, maxhp: 100 }, text: 'ฟื้นฟู 5/วิ · HP สูงสุด +100' }] },
 ];
+// โบนัสหมวด (10-16 บอสสั่ง "ทำให้ครบทุก synergy") — นับเหมือนธาตุ ครบ 3 / 5 ชิ้นบนกระดาน ได้พร้อมกับธาตุ
+// คีย์ใหม่: crit / weaponStartHaste / startCharge / toolCd(%) / poison / startPoisonFoe / income / crewDmg / crewStartHaste
+const CATEGORIES = [
+  { id: 'weapon', name: 'อาวุธ', icon: '⚔️', kind: 'cat', tiers: [
+    { n: 3, mods: { crit: 10 }, text: 'อาวุธคริ +10%' },
+    { n: 5, mods: { crit: 20, weaponStartHaste: 3 }, text: 'อาวุธคริ +20% · เริ่มรบอาวุธทุกชิ้นเร่ง 3 วิ' }] },
+  { id: 'tool', name: 'เครื่องมือ', icon: '🧰', kind: 'cat', tiers: [
+    { n: 3, mods: { startCharge: 1 }, text: 'เริ่มรบ ทุกชิ้นชาร์จล่วงหน้า 1 วิ' },
+    { n: 5, mods: { startCharge: 2, toolCd: 15 }, text: 'ชาร์จล่วงหน้า 2 วิ · เครื่องมือคูลดาวน์สั้นลง 15%' }] },
+  { id: 'food', name: 'อาหาร', icon: '🍲', kind: 'cat', tiers: [
+    { n: 3, mods: { maxhp: 60 }, text: 'HP สูงสุด +60' },
+    { n: 5, mods: { maxhp: 150, heal: 15 }, text: 'HP สูงสุด +150 · ฮีลเพิ่ม +15' }] },
+  { id: 'sea', name: 'สัตว์ทะเล', icon: '🐙', kind: 'cat', tiers: [
+    { n: 3, mods: { poison: 2 }, text: 'พิษเพิ่ม +2 ทุกครั้ง' },
+    { n: 5, mods: { poison: 4, startPoisonFoe: 5 }, text: 'พิษเพิ่ม +4 · เริ่มรบศัตรูติดพิษ 5' }] },
+  { id: 'treasure', name: 'สมบัติ', icon: '💎', kind: 'cat', tiers: [
+    { n: 3, mods: { income: 2 }, text: 'ได้ทอง +2 ต่อวัน' },
+    { n: 5, mods: { income: 4, startShield: 60 }, text: 'ได้ทอง +4 ต่อวัน · เริ่มรบมีโล่ 60' }] },
+  { id: 'crew', name: 'ลูกเรือ', icon: '🧑‍🤝‍🧑', kind: 'cat', tiers: [
+    { n: 3, mods: { crewDmg: 8 }, text: 'ลูกเรือโจมตีเพิ่ม +8' },
+    { n: 5, mods: { crewDmg: 15, crewStartHaste: 4 }, text: 'ลูกเรือโจมตี +15 · เริ่มรบลูกเรือทุกชิ้นเร่ง 4 วิ' }] },
+];
+const SYNERGIES = ELEMENTS.concat(CATEGORIES);
 function countElems(itemIds) {
-  var c = {}; ELEMENTS.forEach(function (e) { c[e.id] = 0; });
+  var c = {}; SYNERGIES.forEach(function (e) { c[e.id] = 0; });
   itemIds.forEach(function (id) { var d = ITEM_BY_ID[id]; if (d) d.tags.forEach(function (t) { if (c[t] !== undefined) c[t]++; }); });
   return c;
 }
 // คืน [{el, tier(0/1), n, text, mods}] เฉพาะธาตุที่ครบเกณฑ์
 function elemBonuses(itemIds) {
   var c = countElems(itemIds), out = [];
-  ELEMENTS.forEach(function (e) {
+  SYNERGIES.forEach(function (e) {
     var got = null;
     e.tiers.forEach(function (t, i) { if (c[e.id] >= t.n) got = { el: e, tier: i, n: c[e.id], text: t.text, mods: t.mods }; });
     if (got) out.push(got);
@@ -232,4 +290,4 @@ function itemCost(def, tier) { return BAL.COST_BY_SIZE[def.size] + BAL.COST_PER_
 function skillCost(tier) { return BAL.SKILL_COST + BAL.COST_PER_TIER * tier; }
 function sellPrice(def, tier) { return Math.max(1, Math.floor(itemCost(def, tier) * BAL.SELL_RATE)); }
 
-if (typeof module !== 'undefined') module.exports = { BAL: BAL, ARCHETYPES: ARCHETYPES, BOSSES: BOSSES, BOSS_BY_ID: BOSS_BY_ID, TIERS: TIERS, SIZE_NAME: SIZE_NAME, TAG_NAME: TAG_NAME, ITEMS: ITEMS, ITEM_BY_ID: ITEM_BY_ID, SKILLS: SKILLS, SKILL_BY_ID: SKILL_BY_ID, HEROES: HEROES, HERO_BY_ID: HERO_BY_ID, ELEMENTS: ELEMENTS, EVENTS: EVENTS, countElems: countElems, elemBonuses: elemBonuses, fxVal: fxVal, fmtNum: fmtNum, itemDescr: itemDescr, skillDescr: skillDescr, itemCost: itemCost, skillCost: skillCost, sellPrice: sellPrice };
+if (typeof module !== 'undefined') module.exports = { BAL: BAL, ARCHETYPES: ARCHETYPES, ARCH_BY_ID: ARCH_BY_ID, ENEMIES: ENEMIES, ENEMY_BY_ID: ENEMY_BY_ID, ENEMY_KIND: ENEMY_KIND, CATEGORIES: CATEGORIES, SYNERGIES: SYNERGIES, BOSSES: BOSSES, BOSS_BY_ID: BOSS_BY_ID, TIERS: TIERS, SIZE_NAME: SIZE_NAME, TAG_NAME: TAG_NAME, ITEMS: ITEMS, ITEM_BY_ID: ITEM_BY_ID, SKILLS: SKILLS, SKILL_BY_ID: SKILL_BY_ID, HEROES: HEROES, HERO_BY_ID: HERO_BY_ID, ELEMENTS: ELEMENTS, EVENTS: EVENTS, countElems: countElems, elemBonuses: elemBonuses, fxVal: fxVal, fmtNum: fmtNum, itemDescr: itemDescr, skillDescr: skillDescr, itemCost: itemCost, skillCost: skillCost, sellPrice: sellPrice };
